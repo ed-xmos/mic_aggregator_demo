@@ -1,0 +1,6 @@
+[submodule "fwk_io"]
+	path = fwk_io
+	url = git@github.com:xmos/fwk_io.git
+[submodule "lib_xcore_math"]
+	path = lib_xcore_math
+	url = git@github.com:xmos/lib_xcore_math.git
