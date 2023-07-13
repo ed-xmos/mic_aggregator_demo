@@ -1,15 +1,12 @@
 # mic_aggregator_demo
 16 PDM mics to TDM 16 demo running on the explorer board
 
-****************
 Building the app
-****************
+----------------
 
 First install and source the XTC version: 15.2.1 tools.
 
 To build for the first time:
-
-.. code-block:: console
 
     $ mkdir build
     $ cd build
@@ -18,13 +15,11 @@ To build for the first time:
 
 Following inital cmake build, you may just type:
 
-. code-block:: console
     $ make mic_aggregator -j
 
-**************
 Running the app
-**************
+---------------
 
-. code-block:: console
+Connect the explorer board to the host and type:
 
     $ xrun app_mic_aggregator/mic_aggregator.xe 
