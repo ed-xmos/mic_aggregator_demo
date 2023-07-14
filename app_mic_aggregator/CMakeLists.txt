@@ -3,11 +3,14 @@
 #**********************
 
 set(APP_SRC_PATH src)
-
+set(MIC_ARRAY_DEMO_UTILS_PATH ../fwk_io/modules/mic_array/demos/common/src/)
 
 file(GLOB APP_SOURCES               ${APP_SRC_PATH}/*.c
                                     ${APP_SRC_PATH}/*.xc
                                     ${APP_SRC_PATH}/*.cpp
+                                    ${APP_SRC_PATH}/config.xscope
+
+                                    ${MIC_ARRAY_DEMO_UTILS_PATH}/device_pll_ctrl.c
 )
 
 
@@ -19,20 +22,27 @@ set(APP_COMPILER_FLAGS
     -g
     -report
     -fxscope
-    # -mcmodel=large
+    -mcmodel=large
     # -Werror
     -Wall
     -Wno-xcore-fptrgroup
     -target=XCORE-AI-EXPLORER
 )
 
+set( APP_INCLUDES
+    ${APP_SRC_PATH}
+    ${MIC_ARRAY_DEMO_UTILS_PATH}
+    ${MIC_ARRAY_PAR_DECIMATOR_PATH}
+)
+
 set(APP_COMPILE_DEFINITIONS
     DEBUG_PRINT_ENABLE=1
-    )
+)
 
 set(APP_LINK_OPTIONS
     -report
     -target=XCORE-AI-EXPLORER
+    ${CMAKE_CURRENT_LIST_DIR}/src/config.xscope
 )
 
 set(APP_COMMON_LINK_LIBRARIES
@@ -40,6 +50,8 @@ set(APP_COMMON_LINK_LIBRARIES
     lib_i2c
     lib_mic_array
 )
+
+
 
 #*************************
 # Create Target - Note just single tile as no RTOS
