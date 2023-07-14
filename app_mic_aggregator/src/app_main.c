@@ -2,6 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <xcore/channel.h>
 #include <xcore/parallel.h>
 
@@ -36,16 +37,20 @@ void hub(chanend_t c_mic_array) {
 
     int32_t audio_frame[MIC_ARRAY_CONFIG_MIC_COUNT][MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME];
 
+    unsigned count = 0;
     while(1){
 
       ma_frame_rx((int32_t*)audio_frame, c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
-      printf("ma_frame_rx: %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", 
-        audio_frame[0][0], audio_frame[1][0], audio_frame[2][0], audio_frame[3][0],
-        audio_frame[4][0], audio_frame[5][0], audio_frame[6][0], audio_frame[7][0],
-        audio_frame[8][0], audio_frame[9][0], audio_frame[10][0], audio_frame[11][0],
-        audio_frame[12][0], audio_frame[13][0], audio_frame[14][0], audio_frame[15][0]
-        );
-  }
+      if(count > 16000){
+          printf("ma_frame_rx: %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", 
+            audio_frame[0][0], audio_frame[1][0], audio_frame[2][0], audio_frame[3][0],
+            audio_frame[4][0], audio_frame[5][0], audio_frame[6][0], audio_frame[7][0],
+            audio_frame[8][0], audio_frame[9][0], audio_frame[10][0], audio_frame[11][0],
+            audio_frame[12][0], audio_frame[13][0], audio_frame[14][0], audio_frame[15][0]
+            );
+          count =0;
+      }
+    }
 }
 
 
@@ -60,6 +65,8 @@ void i2s_init(void *app_data, i2s_config_t *i2s_config)
 I2S_CALLBACK_ATTR
 void i2s_send(void *app_data, size_t n, int32_t *send_data)
 {
+    printf("i2s_send\n");
+
     static int32_t cnt = 0;
 
     if (cnt == 500) {
@@ -90,11 +97,11 @@ void tdm16(void) {
             .app_data = NULL,
     };
 
-    port_t p_bclk = TDM_PORT_BCLK;
-    port_t p_fsync = TDM_PORT_FSYNCH;
-    port_t p_dout = TDM_PORT_OUT;
+    port_t p_bclk = TDM_SLAVEPORT_BCLK;
+    port_t p_fsync = TDM_SLAVEPORT_FSYNCH;
+    port_t p_dout = TDM_SLAVEPORT_OUT;
 
-    xclock_t bclk = TDM_PORT_CLK_BLK;
+    xclock_t bclk = TDM_SLAVEPORT_CLK_BLK;
 
     i2s_tdm_slave_tx_16_init(
         &ctx,
@@ -103,15 +110,30 @@ void tdm16(void) {
         p_fsync,
         p_bclk,
         bclk,
-        TDM_TX_OFFSET,
+        TDM_SLAVETX_OFFSET,
         I2S_SLAVE_SAMPLE_ON_BCLK_RISING,
         NULL);
-        
+
+    i2s_tdm_slave_tx_16_thread(&ctx);
 }
 
 DECLARE_JOB(tdm_master_emulator, (void));
 void tdm_master_emulator(void) {
     printf("tdm_master_emulator\n");
+
+    port_t p_bclk_master = TDM_MASTER_EMULATOR_FSYNCH;
+
+    port_enable(p_bclk_master);
+    port_start_buffered(p_bclk_master, 32);
+    port_set_clock(p_bclk_master, TDM_SLAVEPORT_CLK_BLK);
+    port_clear_buffer(p_bclk_master);
+
+    while(1){
+        port_out(p_bclk_master, 0x00000001);
+        for(int i = 0; i < 15; i++){
+            port_out(p_bclk_master, 0x00000000);
+        }
+    }
 }
 
 
@@ -135,7 +157,7 @@ void main_tile_1(chanend_t c_cross_tile){
 
     PAR_JOBS(
         PJOB(hub, (c_cross_tile)),
-        PJOB(tdm16, ())
-        // PJOB(tdm_master_emulator, ())
+        PJOB(tdm16, ()),
+        PJOB(tdm_master_emulator, ())
     );
 }
