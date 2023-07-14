@@ -23,6 +23,7 @@ set(APP_COMPILER_FLAGS
     # -Werror
     -Wall
     -Wno-xcore-fptrgroup
+    -target=XCORE-AI-EXPLORER
 )
 
 set(APP_COMPILE_DEFINITIONS
