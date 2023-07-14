@@ -33,9 +33,8 @@
 
 ////// Additional macros derived from others
 
-// #define MIC_ARRAY_CONFIG_MCLK_DIVIDER           ((MIC_ARRAY_CONFIG_MCLK_FREQ)       \
-//                                                 /(MIC_ARRAY_CONFIG_PDM_FREQ))
-#define MIC_ARRAY_CONFIG_MCLK_DIVIDER 50
+#define MIC_ARRAY_CONFIG_MCLK_DIVIDER           ((MIC_ARRAY_CONFIG_MCLK_FREQ)       \
+                                                /(MIC_ARRAY_CONFIG_PDM_FREQ))
 
 #define MIC_ARRAY_CONFIG_OUT_SAMPLE_RATE        ((MIC_ARRAY_CONFIG_PDM_FREQ)      \
                                                 /(STAGE2_DEC_FACTOR))
@@ -62,6 +61,14 @@ TMicArray mics;
 MA_C_API
 void app_mic_array_init()
 {
+  mic_array_resources_configure(&pdm_res, MIC_ARRAY_CONFIG_MCLK_DIVIDER);
+  mics.Init();
+  mics.SetPort(pdm_res.p_pdm_mics);
+  if(!MIC_ARRAY_PDM_RX_OWN_THREAD)
+  {
+    mic_array_pdm_clock_start(&pdm_res);
+  }
+  
   printf("MIC CONFIG:\n");
   printf("- MIC_ARRAY_TILE: " XSTR(MIC_ARRAY_TILE) "\n");
   printf("- MIC_ARRAY_CONFIG_CLOCK_BLOCK_A: " XSTR(MIC_ARRAY_CONFIG_CLOCK_BLOCK_A) "\n");
@@ -75,11 +82,15 @@ void app_mic_array_init()
   printf("- MIC_ARRAY_CONFIG_MCLK_DIVIDER: " XSTR(MIC_ARRAY_CONFIG_MCLK_DIVIDER) "\n");
   printf("- MIC_ARRAY_CONFIG_PORT_PDM_DATA: " XSTR(MIC_ARRAY_CONFIG_PORT_PDM_DATA) "\n");
   printf("- MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME: " XSTR(MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME) "\n");
+  printf("- MIC_ARRAY_NUM_DECIMATOR_TASKS: " XSTR(MIC_ARRAY_NUM_DECIMATOR_TASKS) "\n");
+  printf("- MIC_ARRAY_PDM_RX_OWN_THREAD: " XSTR(MIC_ARRAY_PDM_RX_OWN_THREAD) "\n");
+}
 
-  mics.Init();
-  mics.SetPort(pdm_res.p_pdm_mics);
-  mic_array_resources_configure(&pdm_res, MIC_ARRAY_CONFIG_MCLK_DIVIDER);
+MA_C_API
+void app_pdm_rx_task()
+{
   mic_array_pdm_clock_start(&pdm_res);
+  mics.PdmRxThreadEntry();
 }
 
 MA_C_API
@@ -87,9 +98,11 @@ void app_mic_array_task(chanend_t c_frames_out)
 {
   mics.SetOutputChannel(c_frames_out);
 
-  mics.InstallPdmRxISR();
-  mics.UnmaskPdmRxISR();
-
+  if(!MIC_ARRAY_PDM_RX_OWN_THREAD)
+  {
+    mics.InstallPdmRxISR();
+    mics.UnmaskPdmRxISR();
+  }
   mics.ThreadEntry();
 }
 

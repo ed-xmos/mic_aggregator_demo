@@ -15,7 +15,8 @@
 #define MIC_ARRAY_CONFIG_MIC_COUNT      16
 #define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME 32
 #define MIC_ARRAY_TILE                  0           // NOTE: Tile 1 might still have issues with channels other than the first.
-#define NUM_DECIMATOR_SUBTASKS          2           // Indicates the number of subtasks to perform the decimation process on.
+#define MIC_ARRAY_NUM_DECIMATOR_TASKS   2           // Indicates the number of subtasks to perform the decimation process on.
+#define MIC_ARRAY_PDM_RX_OWN_THREAD     1           // Use dedicated thread for PDM Rx task
 
 
 #define MIC_ARRAY_CLK1                  XS1_CLKBLK_1
@@ -24,16 +25,16 @@
 
 
 // Configuration checks
-#if MIC_ARRAY_CONFIG_MIC_COUNT > 8 && NUM_DECIMATOR_SUBTASKS < 2
-#error "NUM_DECIMATOR_SUBTASKS: Unsupported value"
+#if MIC_ARRAY_CONFIG_MIC_COUNT > 8 && MIC_ARRAY_NUM_DECIMATOR_TASKS < 2
+#error "MIC_ARRAY_NUM_DECIMATOR_TASKS: Unsupported value"
 #endif
 
 #if !(MIC_ARRAY_CONFIG_MIC_COUNT == 8 || MIC_ARRAY_CONFIG_MIC_COUNT == 16)
 #error "MIC_ARRAY_CONFIG_MIC_COUNT: Unsupported value"
 #endif
 
-#if NUM_DECIMATOR_SUBTASKS > MIC_ARRAY_CONFIG_MIC_COUNT
-#error "NUM_DECIMATOR_SUBTASKS must be less than or equal to MIC_ARRAY_CONFIG_MIC_COUNT"
+#if MIC_ARRAY_NUM_DECIMATOR_TASKS > MIC_ARRAY_CONFIG_MIC_COUNT
+#error "MIC_ARRAY_NUM_DECIMATOR_TASKS must be less than or equal to MIC_ARRAY_CONFIG_MIC_COUNT"
 #endif
 
 #if MIC_ARRAY_CONFIG_USE_DDR != 1

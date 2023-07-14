@@ -10,8 +10,8 @@
 #include "xcore/parallel.h"
 #include "mic_array/etc/fir_1x16_bit.h"
 
-#ifndef NUM_DECIMATOR_SUBTASKS
-#define NUM_DECIMATOR_SUBTASKS 2
+#ifndef MIC_ARRAY_NUM_DECIMATOR_TASKS
+#define MIC_ARRAY_NUM_DECIMATOR_TASKS 2
 #endif
 
 DECLARE_JOB(decimator_subtask, (
@@ -27,35 +27,35 @@ void decimator_subtask_run(const unsigned num_mics,
         const unsigned s2_dec_factor, filter_fir_s32_t* s2_filters,
         uint32_t* pdm_block, int32_t* sample_out)
 {
-#if NUM_DECIMATOR_SUBTASKS <= 1
-  decimator_subtask(0, NUM_DECIMATOR_SUBTASKS, num_mics,
+#if MIC_ARRAY_NUM_DECIMATOR_TASKS <= 1
+  decimator_subtask(0, MIC_ARRAY_NUM_DECIMATOR_TASKS, num_mics,
                     s1_hist, s1_filter_coef,
                     s2_dec_factor, s2_filters,
                     pdm_block, sample_out);
-#elif NUM_DECIMATOR_SUBTASKS > 1
+#elif MIC_ARRAY_NUM_DECIMATOR_TASKS > 1
   PAR_JOBS (
-    PJOB(decimator_subtask, (0, NUM_DECIMATOR_SUBTASKS, num_mics,
+    PJOB(decimator_subtask, (0, MIC_ARRAY_NUM_DECIMATOR_TASKS, num_mics,
                              s1_hist, s1_filter_coef,
                              s2_dec_factor, s2_filters,
                              pdm_block, sample_out)),
-    PJOB(decimator_subtask, (1, NUM_DECIMATOR_SUBTASKS, num_mics,
+    PJOB(decimator_subtask, (1, MIC_ARRAY_NUM_DECIMATOR_TASKS, num_mics,
                              s1_hist, s1_filter_coef,
                              s2_dec_factor, s2_filters,
                              pdm_block, sample_out))
-#if NUM_DECIMATOR_SUBTASKS > 2
-    ,PJOB(decimator_subtask, (2, NUM_DECIMATOR_SUBTASKS, num_mics,
-                             s1_hist, s1_filter_coef,
-                             s2_dec_factor, s2_filters,
-                             pdm_block, sample_out))
-#endif
-#if NUM_DECIMATOR_SUBTASKS > 3
-    ,PJOB(decimator_subtask, (3, NUM_DECIMATOR_SUBTASKS, num_mics,
+#if MIC_ARRAY_NUM_DECIMATOR_TASKS > 2
+    ,PJOB(decimator_subtask, (2, MIC_ARRAY_NUM_DECIMATOR_TASKS, num_mics,
                              s1_hist, s1_filter_coef,
                              s2_dec_factor, s2_filters,
                              pdm_block, sample_out))
 #endif
-#if NUM_DECIMATOR_SUBTASKS > 4
-  #error "NUM_DECIMATOR_SUBTASKS: Value not supported"
+#if MIC_ARRAY_NUM_DECIMATOR_TASKS > 3
+    ,PJOB(decimator_subtask, (3, MIC_ARRAY_NUM_DECIMATOR_TASKS, num_mics,
+                             s1_hist, s1_filter_coef,
+                             s2_dec_factor, s2_filters,
+                             pdm_block, sample_out))
+#endif
+#if MIC_ARRAY_NUM_DECIMATOR_TASKS > 4
+  #error "MIC_ARRAY_NUM_DECIMATOR_TASKS: Value not supported"
 #endif
   );
 #endif

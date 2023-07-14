@@ -11,6 +11,7 @@
 
 MA_C_API void app_mic_array_init(void);
 MA_C_API void app_mic_array_task(chanend_t c_frames_out);
+MA_C_API void app_pdm_rx_task(void);
 MA_C_API void app_mic_array_assertion_disable(void);
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
@@ -21,6 +22,14 @@ void pdm_mic_16(chanend_t c_mic_array) {
     app_mic_array_assertion_disable();
     app_mic_array_task(c_mic_array);
 }
+
+DECLARE_JOB(pdm_mic_16_front_end, (void));
+void pdm_mic_16_front_end(void) {
+    printf("pdm_mic_16_front_end\n");
+
+    app_pdm_rx_task();
+}
+
 
 DECLARE_JOB(hub, (chanend_t));
 void hub(chanend_t c_mic_array) {
@@ -59,7 +68,8 @@ void main_tile_0(chanend_t c_cross_tile){
     printf("Hello world tile[0]\n");
 
     PAR_JOBS(
-        PJOB(pdm_mic_16, (c_cross_tile))
+        PJOB(pdm_mic_16, (c_cross_tile)),
+        PJOB(pdm_mic_16_front_end, ())
     );
 }
 
