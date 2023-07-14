@@ -31,36 +31,7 @@ void app_mic_array_assertion_enable( void );
 MA_C_API
 void app_mic_array_assertion_disable( void );
 
-#if (MIC_ARRAY_TILE == 0)
-
 MA_C_API
-void app_i2s_task0( void* app_context );
-
-#endif
-
-MA_C_API
-void app_i2s_task( void* app_context );
-
-#if USE_BUTTONS
-
-#if (MIC_ARRAY_TILE == 0)
-
-MA_C_API
-void app_buttons_task( void );
-
-#else // (MIC_ARRAY_TILE == 0)
-
-MA_C_API
-void app_buttons_task( void* app_context );
-
-MA_C_API
-void app_set_selected_mic_dataline( uint32_t dataline );
-
-#endif // (MIC_ARRAY_TILE == 0)
-
-#endif // USE_BUTTONS
-
-MA_C_API
-uint32_t app_get_selected_mic_dataline( void );
+void app_pdm_rx_task( void );
 
 C_API_END

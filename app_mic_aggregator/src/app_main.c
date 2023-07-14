@@ -8,11 +8,8 @@
 #include "app_config.h"
 #include "mic_array.h"
 #include "device_pll_ctrl.h"
+#include "mic_array_wrapper.h"
 
-MA_C_API void app_mic_array_init(void);
-MA_C_API void app_mic_array_task(chanend_t c_frames_out);
-MA_C_API void app_pdm_rx_task(void);
-MA_C_API void app_mic_array_assertion_disable(void);
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
 void pdm_mic_16(chanend_t c_mic_array) {
@@ -39,7 +36,7 @@ void hub(chanend_t c_mic_array) {
 
     while(1){
 
-      ma_frame_rx(audio_frame, c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
+      ma_frame_rx((int32_t*)audio_frame, c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
       printf("ma_frame_rx: %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", 
         audio_frame[0][0], audio_frame[1][0], audio_frame[2][0], audio_frame[3][0],
         audio_frame[4][0], audio_frame[5][0], audio_frame[6][0], audio_frame[7][0],
