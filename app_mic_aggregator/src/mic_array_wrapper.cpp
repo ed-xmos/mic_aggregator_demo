@@ -33,8 +33,10 @@
 
 ////// Additional macros derived from others
 
-#define MIC_ARRAY_CONFIG_MCLK_DIVIDER           ((MIC_ARRAY_CONFIG_MCLK_FREQ)       \
-                                                /(MIC_ARRAY_CONFIG_PDM_FREQ))
+// #define MIC_ARRAY_CONFIG_MCLK_DIVIDER           ((MIC_ARRAY_CONFIG_MCLK_FREQ)       \
+//                                                 /(MIC_ARRAY_CONFIG_PDM_FREQ))
+#define MIC_ARRAY_CONFIG_MCLK_DIVIDER 50
+
 #define MIC_ARRAY_CONFIG_OUT_SAMPLE_RATE        ((MIC_ARRAY_CONFIG_PDM_FREQ)      \
                                                 /(STAGE2_DEC_FACTOR))
 
@@ -70,6 +72,7 @@ void app_mic_array_init()
   printf("- MIC_ARRAY_CONFIG_USE_DDR: " XSTR(MIC_ARRAY_CONFIG_USE_DDR) "\n");
   printf("- MIC_ARRAY_CONFIG_PORT_MCLK: " XSTR(MIC_ARRAY_CONFIG_PORT_MCLK) "\n");
   printf("- MIC_ARRAY_CONFIG_PORT_PDM_CLK: " XSTR(MIC_ARRAY_CONFIG_PORT_PDM_CLK) "\n");
+  printf("- MIC_ARRAY_CONFIG_MCLK_DIVIDER: " XSTR(MIC_ARRAY_CONFIG_MCLK_DIVIDER) "\n");
   printf("- MIC_ARRAY_CONFIG_PORT_PDM_DATA: " XSTR(MIC_ARRAY_CONFIG_PORT_PDM_DATA) "\n");
   printf("- MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME: " XSTR(MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME) "\n");
 

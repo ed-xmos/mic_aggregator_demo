@@ -3,11 +3,6 @@
 
 #pragma once
 
-#define AUDIO_BUFFER_SAMPLES  ((unsigned)(MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME * 1.2))
-#define APP_AUDIO_PIPELINE_SAMPLE_RATE  16000
-#define APP_I2S_AUDIO_SAMPLE_RATE       APP_AUDIO_PIPELINE_SAMPLE_RATE
-
-#define USE_BUTTONS                     1
 #define ENABLE_BURN_MIPS                0           // Specifies whether to include burn() tasks on remaining cores for testing purposes.
 
 
@@ -18,7 +13,7 @@
 #define MIC_ARRAY_CONFIG_PORT_PDM_CLK   XS1_PORT_1A // X0D00, J14 - Pin 2
 #define MIC_ARRAY_CONFIG_PORT_PDM_DATA  XS1_PORT_8B // X0D14..X0D21 | J14 - Pin 3,5,12,14 and Pin 6,7,10,11
 #define MIC_ARRAY_CONFIG_MIC_COUNT      16
-#define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME 1
+#define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME 32
 #define MIC_ARRAY_TILE                  0           // NOTE: Tile 1 might still have issues with channels other than the first.
 #define NUM_DECIMATOR_SUBTASKS          2           // Indicates the number of subtasks to perform the decimation process on.
 

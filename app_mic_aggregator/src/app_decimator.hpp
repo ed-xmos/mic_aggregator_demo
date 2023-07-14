@@ -208,6 +208,13 @@ void my_mic_array::MyTwoStageDecimator<MIC_COUNT,S2_DEC_FACTOR,S2_TAP_COUNT>::In
     filter_fir_s32_init(&this->stage2.filters[k], &this->stage2.filter_state[k][0],
                         S2_TAP_COUNT, s2_filter_coef, s2_shr);
   }
+  printf("pdm_history:  %p size: 0x%x\n",this->stage1.pdm_history, sizeof(this->stage1.pdm_history));
+  printf("pdm_history max:  %p\n",(uint8_t*)this->stage1.pdm_history + sizeof(this->stage1.pdm_history));
+  printf("s1_filter_coef   %p\n", s1_filter_coef);
+  printf("s2_filter_coef   %p\n", s2_filter_coef);
+  printf("s2_shr   %u\n", s2_shr);
+
+
 }
 
 
