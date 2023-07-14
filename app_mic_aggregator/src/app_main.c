@@ -9,6 +9,8 @@
 #include "mic_array.h"
 #include "device_pll_ctrl.h"
 #include "mic_array_wrapper.h"
+#include "i2s_tdm_slave.h"
+
 
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
@@ -46,9 +48,65 @@ void hub(chanend_t c_mic_array) {
   }
 }
 
+
+I2S_CALLBACK_ATTR
+void i2s_init(void *app_data, i2s_config_t *i2s_config)
+{
+    (void) app_data;
+    (void) i2s_config;
+
+}
+
+I2S_CALLBACK_ATTR
+void i2s_send(void *app_data, size_t n, int32_t *send_data)
+{
+    static int32_t cnt = 0;
+
+    if (cnt == 500) {
+        printf("TDM iters reached..\n");
+        exit(0);
+    }
+
+    cnt++;
+}
+
+I2S_CALLBACK_ATTR
+i2s_restart_t i2s_restart_check(void *app_data)
+{
+    return I2S_NO_RESTART;
+}
+
+
 DECLARE_JOB(tdm16, (void));
 void tdm16(void) {
     printf("tdm16\n");
+
+    i2s_tdm_ctx_t ctx;
+    i2s_callback_group_t i_i2s = {
+            .init = (i2s_init_t) i2s_init,
+            .restart_check = (i2s_restart_check_t) i2s_restart_check,
+            .receive = NULL,
+            .send = (i2s_send_t) i2s_send,
+            .app_data = NULL,
+    };
+
+    port_t p_bclk = TDM_PORT_BCLK;
+    port_t p_fsync = TDM_PORT_FSYNCH;
+    port_t p_dout = TDM_PORT_OUT;
+
+    xclock_t bclk = TDM_PORT_CLK_BLK;
+
+    i2s_tdm_slave_tx_16_init(
+        &ctx,
+        &i_i2s,
+        p_dout,
+        p_fsync,
+        p_bclk,
+        bclk,
+        TDM_TX_OFFSET,
+        I2S_SLAVE_SAMPLE_ON_BCLK_RISING,
+        NULL);
+        
 }
 
 DECLARE_JOB(tdm_master_emulator, (void));
@@ -59,7 +117,7 @@ void tdm_master_emulator(void) {
 
 
 
-///////// Tile main functions ///////////
+///////// Tile main functions where we par off the threads ///////////
 
 void main_tile_0(chanend_t c_cross_tile){
     printf("Hello world tile[0]\n");
@@ -76,8 +134,8 @@ void main_tile_1(chanend_t c_cross_tile){
     device_pll_init();
 
     PAR_JOBS(
-        PJOB(hub, (c_cross_tile))
-        // PJOB(tdm16, ()),
+        PJOB(hub, (c_cross_tile)),
+        PJOB(tdm16, ())
         // PJOB(tdm_master_emulator, ())
     );
 }
