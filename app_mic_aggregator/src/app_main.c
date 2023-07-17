@@ -3,9 +3,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <xcore/channel.h>
 #include <xcore/parallel.h>
 #include <xcore/hwtimer.h>
+#include <xscope.h>
 
 #include "app_config.h"
 #include "mic_array.h"
@@ -18,6 +20,7 @@ typedef struct audio_frame_t{
     int32_t data[MIC_ARRAY_CONFIG_MIC_COUNT][MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME];
     } audio_frame_t;
 volatile audio_frame_t *read_buffer = NULL;
+volatile int32_t timing = 0;
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
 void pdm_mic_16(chanend_t c_mic_array) {
@@ -41,11 +44,10 @@ void monitor(void) {
 
     hwtimer_t tmr = hwtimer_alloc();
 
-
     while(1){
         hwtimer_delay(tmr, XS1_TIMER_KHZ * 10);
         audio_frame_t *audio_frame = (audio_frame_t *)read_buffer;
-        printf("ma_frame_rx: 0x%p %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", audio_frame,
+        printf("ma_frame_rx: %ld 0x%p %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", timing, audio_frame,
           audio_frame->data[0][0], audio_frame->data[1][0], audio_frame->data[2][0], audio_frame->data[3][0],
           audio_frame->data[4][0], audio_frame->data[5][0], audio_frame->data[6][0], audio_frame->data[7][0],
           audio_frame->data[8][0], audio_frame->data[9][0], audio_frame->data[10][0], audio_frame->data[11][0],
@@ -65,9 +67,16 @@ void hub(chanend_t c_mic_array) {
     printf("ptrs: %p %p %p\n", audio_frames[0].data, audio_frames[1].data, audio_frames[2].data);
 
     while(1){
+        int32_t t0 = get_reference_time();        
+        ma_frame_rx((int32_t*)&audio_frames[write_buffer_idx], c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
+        timing = get_reference_time() - t0;
 
         read_buffer = &audio_frames[write_buffer_idx];
-        ma_frame_rx((int32_t*)read_buffer, c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
+
+        for(int i = 0; i < MIC_ARRAY_CONFIG_MIC_COUNT; i++){
+            int32_t samp = read_buffer->data[i][0];
+            xscope_int(i, samp << 6);
+        }
 
         write_buffer_idx++;
         if(write_buffer_idx == NUM_AUDIO_BUFFERS){
