@@ -2,8 +2,9 @@
 # Gather Sources
 #**********************
 
-set(APP_SRC_PATH src)
+set(APP_SRC_PATH ${CMAKE_CURRENT_LIST_DIR}/src)
 set(MIC_ARRAY_DEMO_UTILS_PATH ../fwk_io/modules/mic_array/demos/common/src/)
+set(PLATFORM_FILE ${APP_SRC_PATH}/XCORE-AI-EXPLORER.xn)
 
 file(GLOB APP_SOURCES               ${APP_SRC_PATH}/*.c
                                     ${APP_SRC_PATH}/*.xc
@@ -18,7 +19,7 @@ file(GLOB APP_SOURCES               ${APP_SRC_PATH}/*.c
 # Flags
 #**********************
 set(APP_COMPILER_FLAGS
-    -Os
+    -O3
     -g
     -report
     -fxscope
@@ -26,7 +27,7 @@ set(APP_COMPILER_FLAGS
     # -Werror
     -Wall
     -Wno-xcore-fptrgroup
-    -target=XCORE-AI-EXPLORER
+    ${PLATFORM_FILE}
 )
 
 set( APP_INCLUDES
@@ -41,7 +42,7 @@ set(APP_COMPILE_DEFINITIONS
 
 set(APP_LINK_OPTIONS
     -report
-    -target=XCORE-AI-EXPLORER
+    ${PLATFORM_FILE}
     ${CMAKE_CURRENT_LIST_DIR}/src/config.xscope
 )
 

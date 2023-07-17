@@ -16,9 +16,11 @@
 #include "i2s_tdm_slave.h"
 
 #define NUM_AUDIO_BUFFERS   3
+
 typedef struct audio_frame_t{
     int32_t data[MIC_ARRAY_CONFIG_MIC_COUNT][MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME];
-    } audio_frame_t;
+} audio_frame_t;
+
 volatile audio_frame_t *read_buffer = NULL;
 volatile int32_t timing = 0;
 

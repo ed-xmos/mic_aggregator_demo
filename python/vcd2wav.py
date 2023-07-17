@@ -68,12 +68,17 @@ def get_data(file, varnames):
             idx = int(m.groups(0)[1])
         else:
             assert 0, f"bNNNNNNNNNNNNNNNNNN M not found in {line}"
-        data[idx].append(val)
-    
+        try:
+            data[idx].append(val)
+        except:
+            print(f"idx: {idx} out of range for {len(varnames)}")
 
 def write_wav(data, varnames, samp_rate):
     num_channels = len(data) - 1 #remove Missing_Data data field
-    wav_data = np.array(data[0:num_channels], dtype=np.int32)
+    min_len = min([len(data[ch]) for ch in range(num_channels)])
+    wav_data = np.zeros((num_channels, min_len), dtype=np.int32)
+    for ch in range(num_channels):
+        wav_data[ch] = np.array(data[ch][0:min_len], dtype=np.int32)
     scipy.io.wavfile.write("capture.wav", samp_rate, wav_data.T)
 
 

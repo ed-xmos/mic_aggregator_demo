@@ -15,7 +15,7 @@
 #define MIC_ARRAY_CONFIG_MIC_COUNT          16
 #define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME  1
 #define MIC_ARRAY_TILE                      0           // NOTE: Tile 1 might still have issues with channels other than the first.
-#define MIC_ARRAY_NUM_DECIMATOR_TASKS       2           // Indicates the number of subtasks to perform the decimation process on.
+#define MIC_ARRAY_NUM_DECIMATOR_TASKS       3           // Indicates the number of subtasks to perform the decimation process on.
 #define MIC_ARRAY_PDM_RX_OWN_THREAD         1           // Use dedicated thread for PDM Rx task
 #define MIC_ARRAY_CLK1                      XS1_CLKBLK_1
 #define MIC_ARRAY_CLK2                      XS1_CLKBLK_2
