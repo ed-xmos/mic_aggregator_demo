@@ -58,23 +58,18 @@ static const uint32_t WORD_ALIGNED stage1_coef_custom[128] = STAGE_1_48K_COEFFS;
 static const int32_t WORD_ALIGNED stage2_coef_custom[MIC_ARRAY_STAGE_2_NUM_TAPS] = STAGE_2_48K_COEFFS;
 static constexpr right_shift_t stage2_shift_custom = MIC_ARRAY_CONFIG_STG2_RIGHT_SHIFT;
 
-
-
 constexpr const uint32_t* stage_1_filter() {
     return &stage1_coef_custom[0];
-    // return &stage1_coef[0];
 }
 
-constexpr int decimation_factor = 6;
-constexpr int stage_2_tap_count = STAGE2_TAP_COUNT;
+constexpr int decimation_factor = MIC_ARRAY_CONFIG_STG2_DEC_FACTOR;
+constexpr int stage_2_tap_count = MIC_ARRAY_STAGE_2_NUM_TAPS;
 
 constexpr const int32_t* stage_2_filter() {
-    // return &stage2_coef_custom[0];
-    return &stage2_coef[0];
+    return &stage2_coef_custom[0];
 }
 constexpr const right_shift_t* stage_2_shift() {
     return &stage2_shift_custom;
-    // return &stage2_shr;
 }
 
 using TMicArray = mic_array::MicArray<mic_count,

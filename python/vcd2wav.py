@@ -71,7 +71,7 @@ def get_data(file, varnames):
         try:
             data[idx].append(val)
         except:
-            print(f"idx: {idx} out of range for {len(varnames)}")
+            print(f"idx: {idx} out of range for {len(varnames)} at line text: {line}", end="")
 
 def write_wav(data, varnames, samp_rate):
     num_channels = len(data) - 1 #remove Missing_Data data field
@@ -98,4 +98,4 @@ def vcd2array(file_name, samp_rate):
         print_summary(data, varnames)
         write_wav(data, varnames, samp_rate)
 
-vcd2array("trace.vcd", 16000)
+vcd2array("trace.vcd", 48000)
