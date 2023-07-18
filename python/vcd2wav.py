@@ -75,6 +75,7 @@ def get_data(file, varnames):
 
 def write_wav(data, varnames, samp_rate):
     num_channels = len(data) - 1 #remove Missing_Data data field
+    num_channels = 2 # temporarily just do two channels
     min_len = min([len(data[ch]) for ch in range(num_channels)])
     wav_data = np.zeros((num_channels, min_len), dtype=np.int32)
     for ch in range(num_channels):

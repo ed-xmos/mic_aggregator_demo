@@ -27,7 +27,7 @@ volatile int32_t timing = 0;
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
 void pdm_mic_16(chanend_t c_mic_array) {
-    printf("pdm_mic_16\n");
+    printf("pdm_mic_16 running: %d threads total\n", MIC_ARRAY_PDM_RX_OWN_THREAD + MIC_ARRAY_NUM_DECIMATOR_TASKS);
 
     app_mic_array_init();
     // app_mic_array_assertion_disable();
@@ -42,20 +42,36 @@ void pdm_mic_16_front_end(void) {
     app_pdm_rx_task();
 }
 
-DECLARE_JOB(monitor, (void));
-void monitor(void) {
-    printf("monitor\n");
+extern volatile int32_t t_dec_exec;
+extern volatile int32_t t_dec_per;
+
+DECLARE_JOB(monitor_tile0, (void));
+void monitor_tile0(void) {
+    printf("monitor_tile0\n");
 
     hwtimer_t tmr = hwtimer_alloc();
 
     while(1){
-        hwtimer_delay(tmr, XS1_TIMER_KHZ * 10);
-        audio_frame_t *audio_frame = (audio_frame_t *)read_buffer;
-        printf("ma_frame_rx: %ld 0x%p %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", timing, audio_frame,
-          audio_frame->data[0][0], audio_frame->data[1][0], audio_frame->data[2][0], audio_frame->data[3][0],
-          audio_frame->data[4][0], audio_frame->data[5][0], audio_frame->data[6][0], audio_frame->data[7][0],
-          audio_frame->data[8][0], audio_frame->data[9][0], audio_frame->data[10][0], audio_frame->data[11][0],
-          audio_frame->data[12][0], audio_frame->data[13][0], audio_frame->data[14][0], audio_frame->data[15][0]
+        hwtimer_delay(tmr, XS1_TIMER_KHZ * 5000);
+        printf("dec period: %ld exec: %ld\n", t_dec_per, t_dec_exec);
+    }
+}
+
+int32_t rx_data[16] = {0};
+
+DECLARE_JOB(monitor_tile1, (void));
+void monitor_tile1(void) {
+    printf("monitor_tile1\n");
+
+    hwtimer_t tmr = hwtimer_alloc();
+
+    while(1){
+        hwtimer_delay(tmr, XS1_TIMER_KHZ * 10000);
+        printf("tdm_rx: %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n",
+          rx_data[0], rx_data[1], rx_data[2], rx_data[3],
+          rx_data[4], rx_data[5], rx_data[6], rx_data[7],
+          rx_data[8], rx_data[9], rx_data[10], rx_data[11],
+          rx_data[12], rx_data[13], rx_data[14], rx_data[15]
           );
     }
 }
@@ -70,17 +86,18 @@ void hub(chanend_t c_mic_array) {
 
     printf("ptrs: %p %p %p\n", audio_frames[0].data, audio_frames[1].data, audio_frames[2].data);
 
+    int32_t old_t = 0;
     while(1){
-        int32_t t0 = get_reference_time();        
+        int32_t t0 = get_reference_time();
+        timing = t0 - old_t;
+        old_t = t0;        
         ma_frame_rx((int32_t*)&audio_frames[write_buffer_idx], c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
-        timing = get_reference_time() - t0;
+
+        for(int i = 0; i < 16; i++){
+            audio_frames[write_buffer_idx].data[i][0] <<= 9; // Simple gain
+        }
 
         read_buffer = &audio_frames[write_buffer_idx];
-
-        for(int i = 0; i < MIC_ARRAY_CONFIG_MIC_COUNT; i++){
-            int32_t samp = read_buffer->data[i][0];
-            xscope_int(i, samp << 6);
-        }
 
         write_buffer_idx++;
         if(write_buffer_idx == NUM_AUDIO_BUFFERS){
@@ -151,15 +168,15 @@ void tdm16(void) {
     i2s_tdm_slave_tx_16_thread(&ctx);
 }
 
-DECLARE_JOB(tdm_master_emulator, (void));
-void tdm_master_emulator(void) {
-    printf("tdm_master_emulator\n");
+DECLARE_JOB(tdm16_master_simple, (void));
+void tdm16_master_simple(void) {
+    printf("tdm16_master_simple\n");
 
-    port_t p_fsynch_master = TDM_MASTER_EMULATOR_FSYNCH;
-    port_t p_data_in_master = TDM_MASTER_EMULATOR_DATA;
-    xclock_t tdm_master_clk = TDM_MASTER_CLK_BLK;
+    port_t p_fsynch_master = TDM_SIMPLE_MASTER_FSYNCH;
+    port_t p_data_in_master = TDM_SIMPLE_MASTER_DATA;
+    xclock_t tdm_master_clk = TDM_SIMPLE_MASTER_CLK_BLK;
 
-    const int offset = 2;
+    const int offset = 1;
 
     clock_enable(tdm_master_clk);
     clock_set_source_port(tdm_master_clk, TDM_SLAVEPORT_BCLK);
@@ -169,40 +186,43 @@ void tdm_master_emulator(void) {
     // Outputs pin from the LSb of the shift register and shifts right
     // Writes to the transfer register to shift register as soon as there is space 
 
+    const int32_t fsynch_bit_pattern = 0x00000001; // Bit stream of up to 32 BCLK periods, 0x3.. 0x7 etc..
     port_enable(p_fsynch_master);
     port_start_buffered(p_fsynch_master, 32);
     port_clear_buffer(p_fsynch_master);
     port_set_clock(p_fsynch_master, tdm_master_clk);
 
     port_set_trigger_time(p_fsynch_master, 1);
-    port_out(p_fsynch_master, 0x00000001);
+    port_out(p_fsynch_master, fsynch_bit_pattern);
 
     // Buffered Input ports:
     // Pin inputs to the MSb and then shifts right
     // Copies to the transfer register when fully shifted
 
+    // Macro to adjust pad timing for the round trip delay
     #define set_pad_delay(port, delay)  {__asm__ __volatile__ ("setc res[%0], %1": : "r" (port) , "r" ((delay << 3) | 0x7007));}
-
 
     port_enable(p_data_in_master);
     port_start_buffered(p_data_in_master, 32);
     port_set_clock(p_data_in_master, tdm_master_clk);
     port_clear_buffer(p_data_in_master);
-    port_set_trigger_time(p_data_in_master, 32 + offset);
-    set_pad_delay(p_data_in_master, 4); // 2,3,4,5 work. 6 unknown. 1 Does not work. So choose 4 as midpoint
+    port_set_trigger_time(p_data_in_master, 32 + 1 + offset);
+    set_pad_delay(p_data_in_master, 4); // 2,3,4,5 work. 6 not settable. 1 Does not work. So choose 4 as midpoint
 
     clock_start(tdm_master_clk);
 
     while(1){
         for(int i = 0; i < 15; i++){
+
             port_out(p_fsynch_master, 0x00000000);
+            if(i && i < 3){ // Output first two channels only due to performance limit of xscope
+                xscope_int(i - 1, rx_data[i - 1]);
+            }
             rx_data[i] = bitrev(port_in(p_data_in_master));
         }
 
-        port_out(p_fsynch_master, 0x00000001);
+        port_out(p_fsynch_master, fsynch_bit_pattern);
         rx_data[15] = bitrev(port_in(p_data_in_master));
-
-   
     }
 }
 
@@ -216,7 +236,8 @@ void main_tile_0(chanend_t c_cross_tile){
 
     PAR_JOBS(
         PJOB(pdm_mic_16, (c_cross_tile)),
-        PJOB(pdm_mic_16_front_end, ())
+        PJOB(pdm_mic_16_front_end, ()),
+        PJOB(monitor_tile0, ())
     );
 }
 
@@ -228,7 +249,7 @@ void main_tile_1(chanend_t c_cross_tile){
     PAR_JOBS(
         PJOB(hub, (c_cross_tile)),
         PJOB(tdm16, ()),
-        PJOB(tdm_master_emulator, ()),
-        PJOB(monitor, ())
+        PJOB(tdm16_master_simple, ()),
+        PJOB(monitor_tile1, ())
     );
 }

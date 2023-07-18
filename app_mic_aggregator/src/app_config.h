@@ -26,9 +26,9 @@
 #define TDM_SLAVEPORT_CLK_BLK               XS1_CLKBLK_1
 #define TDM_SLAVETX_OFFSET                  1
 
-#define TDM_MASTER_EMULATOR_FSYNCH          XS1_PORT_1M // X1D36, J10 - pin 2
-#define TDM_MASTER_EMULATOR_DATA            XS1_PORT_1O // X1D38, J10 - pin 15
-#define TDM_MASTER_CLK_BLK                  XS1_CLKBLK_2
+#define TDM_SIMPLE_MASTER_FSYNCH            XS1_PORT_1M // X1D36, J10 - pin 2
+#define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15
+#define TDM_SIMPLE_MASTER_CLK_BLK           XS1_CLKBLK_2
 
 // Configuration checks
 #if MIC_ARRAY_CONFIG_MIC_COUNT > 8 && MIC_ARRAY_NUM_DECIMATOR_TASKS < 2
