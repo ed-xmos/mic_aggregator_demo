@@ -4,7 +4,7 @@
 
 set(APP_SRC_PATH ${CMAKE_CURRENT_LIST_DIR}/src)
 set(MIC_ARRAY_DEMO_UTILS_PATH ../fwk_io/modules/mic_array/demos/common/src/)
-set(PLATFORM_FILE ${APP_SRC_PATH}/XCORE-AI-EXPLORER.xn)
+set(PLATFORM_FILE ${APP_SRC_PATH}/XCORE-AI-EXPLORER_TMP.xn)
 
 file(GLOB APP_SOURCES               ${APP_SRC_PATH}/*.c
                                     ${APP_SRC_PATH}/*.xc
