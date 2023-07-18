@@ -10,6 +10,7 @@
 
 #include "mic_array.h"
 #include "mic_array/etc/filters_default.h"
+#include "mic_array_48k_decimator_coeffs.h"
 
 #ifndef STR
 #define STR(s) #s
@@ -51,10 +52,56 @@ pdm_rx_resources_t pdm_res = PDM_RX_RESOURCES_DDR(
                                 MIC_ARRAY_CONFIG_CLOCK_BLOCK_A,
                                 MIC_ARRAY_CONFIG_CLOCK_BLOCK_B);
 
-using TMicArray = my_mic_array::MyMicArray<
-                        MIC_ARRAY_CONFIG_MIC_COUNT,
-                        MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME,
-                        MIC_ARRAY_CONFIG_USE_DC_ELIMINATION>;
+// using TMicArray = my_mic_array::MyMicArray<
+//                         MIC_ARRAY_CONFIG_MIC_COUNT,
+//                         MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME,
+//                         MIC_ARRAY_CONFIG_USE_DC_ELIMINATION>;
+
+// constexpr int mic_count = MIC_ARRAY_CONFIG_MIC_COUNT;
+// constexpr int decimation_factor = MIC_ARRAY_CONFIG_STG2_DEC_FACTOR;
+// constexpr int stage_2_tap_count = MIC_ARRAY_STAGE_2_NUM_TAPS;
+// static const uint32_t WORD_ALIGNED stage1_coef_custom[128] = STAGE_1_48K_COEFFS;
+// static const int32_t WORD_ALIGNED stage2_coef_custom[MIC_ARRAY_STAGE_2_NUM_TAPS] = STAGE_2_48K_COEFFS;
+// static constexpr right_shift_t stage2_shift_custom = MIC_ARRAY_CONFIG_STG2_RIGHT_SHIFT;
+
+constexpr int mic_count = MIC_ARRAY_CONFIG_MIC_COUNT;
+constexpr int decimation_factor = 6;
+constexpr int stage_2_tap_count = STAGE2_TAP_COUNT;
+
+constexpr const uint32_t* stage_1_filter() {
+    // return &stage1_coef_custom[0];
+    return &stage1_coef[0];
+}
+constexpr const int32_t* stage_2_filter() {
+    // return &stage2_coef_custom[0];
+    return &stage2_coef[0];
+}
+constexpr const right_shift_t* stage_2_shift() {
+    // return &stage2_shift_custom;
+    return &stage2_shr;
+}
+
+using TMicArray = mic_array::MicArray<mic_count,
+                          my_mic_array::MyTwoStageDecimator<mic_count, 
+                                                       decimation_factor, 
+                                                       stage_2_tap_count>,
+                          mic_array::StandardPdmRxService<mic_count,
+                                                          mic_count,
+                                                          decimation_factor>, 
+                          // std::conditional uses USE_DCOE to determine which 
+                          // sample filter is used.
+                          typename std::conditional<MIC_ARRAY_CONFIG_USE_DC_ELIMINATION,
+                                              mic_array::DcoeSampleFilter<mic_count>,
+                                              mic_array::NopSampleFilter<mic_count>>::type,
+                          mic_array::FrameOutputHandler<mic_count, 
+                                                        MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME, 
+                                                        mic_array::ChannelFrameTransmitter>>;
+
+// using TMicArray = my_mic_array::MyMicArray<
+//                         MIC_ARRAY_CONFIG_MIC_COUNT,
+//                         MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME,
+//                         MIC_ARRAY_CONFIG_USE_DC_ELIMINATION>;
+
 
 TMicArray mics;
 
@@ -62,8 +109,15 @@ MA_C_API
 void app_mic_array_init()
 {
   mic_array_resources_configure(&pdm_res, MIC_ARRAY_CONFIG_MCLK_DIVIDER);
-  mics.Init();
-  mics.SetPort(pdm_res.p_pdm_mics);
+
+  mics.Decimator.Init(stage_1_filter(), stage_2_filter(), *stage_2_shift());
+  mics.PdmRx.Init(pdm_res.p_pdm_mics);
+
+
+  // mics.Init();
+  // mics.SetPort(pdm_res.p_pdm_mics);
+
+
   if(!MIC_ARRAY_PDM_RX_OWN_THREAD)
   {
     mic_array_pdm_clock_start(&pdm_res);
@@ -90,18 +144,18 @@ MA_C_API
 void app_pdm_rx_task()
 {
   mic_array_pdm_clock_start(&pdm_res);
-  mics.PdmRxThreadEntry();
+  mics.PdmRx.ThreadEntry();
 }
 
 MA_C_API
 void app_mic_array_task(chanend_t c_frames_out)
 {
-  mics.SetOutputChannel(c_frames_out);
+  mics.OutputHandler.FrameTx.SetChannel(c_frames_out);
 
   if(!MIC_ARRAY_PDM_RX_OWN_THREAD)
   {
-    mics.InstallPdmRxISR();
-    mics.UnmaskPdmRxISR();
+    mics.PdmRx.InstallISR();
+    mics.PdmRx.UnmaskISR();
   }
   mics.ThreadEntry();
 }

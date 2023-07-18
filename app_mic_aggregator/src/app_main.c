@@ -29,7 +29,8 @@ void pdm_mic_16(chanend_t c_mic_array) {
     printf("pdm_mic_16\n");
 
     app_mic_array_init();
-    app_mic_array_assertion_disable();
+    // app_mic_array_assertion_disable();
+    app_mic_array_assertion_enable();
     app_mic_array_task(c_mic_array);
 }
 
