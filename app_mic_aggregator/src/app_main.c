@@ -8,6 +8,7 @@
 #include <xcore/parallel.h>
 #include <xcore/hwtimer.h>
 #include <xscope.h>
+#include <xclib.h>
 
 #include "app_config.h"
 #include "mic_array.h"
@@ -104,8 +105,6 @@ void i2s_send(void *app_data, size_t n, int32_t *send_data)
 {
     audio_frame_t *curr_read_buffer = (audio_frame_t *)read_buffer; // Make copy just in case mics move on buffer halfway through frame
 
-    // printf("i2s_send %p\n", curr_read_buffer);
-
     if(curr_read_buffer != NULL)
     for(int ch = 0; ch < 16; ch++){
         send_data[ch] = curr_read_buffer->data[ch][0];
@@ -160,34 +159,50 @@ void tdm_master_emulator(void) {
     port_t p_data_in_master = TDM_MASTER_EMULATOR_DATA;
     xclock_t tdm_master_clk = TDM_MASTER_CLK_BLK;
 
+    const int offset = 2;
+
     clock_enable(tdm_master_clk);
     clock_set_source_port(tdm_master_clk, TDM_SLAVEPORT_BCLK);
     clock_set_divide(tdm_master_clk, 0);
+
+    // Buffered Output ports:
+    // Outputs pin from the LSb of the shift register and shifts right
+    // Writes to the transfer register to shift register as soon as there is space 
 
     port_enable(p_fsynch_master);
     port_start_buffered(p_fsynch_master, 32);
     port_clear_buffer(p_fsynch_master);
     port_set_clock(p_fsynch_master, tdm_master_clk);
-    // port_out(p_fsynch_master, 0x00000000);
+
+    port_set_trigger_time(p_fsynch_master, 1);
+    port_out(p_fsynch_master, 0x00000001);
+
+    // Buffered Input ports:
+    // Pin inputs to the MSb and then shifts right
+    // Copies to the transfer register when fully shifted
+
+    #define set_pad_delay(port, delay)  {__asm__ __volatile__ ("setc res[%0], %1": : "r" (port) , "r" ((delay << 3) | 0x7007));}
+
 
     port_enable(p_data_in_master);
     port_start_buffered(p_data_in_master, 32);
-    // port_in(p_data_in_master); // Dummy read
     port_set_clock(p_data_in_master, tdm_master_clk);
     port_clear_buffer(p_data_in_master);
-
-    int32_t rx_data[16] = {0};
+    port_set_trigger_time(p_data_in_master, 32 + offset);
+    set_pad_delay(p_data_in_master, 4); // 2,3,4,5 work. 6 unknown. 1 Does not work. So choose 4 as midpoint
 
     clock_start(tdm_master_clk);
 
     while(1){
-        port_out(p_fsynch_master, 0x00000001);
-
-        // rx_data[0] = port_in(p_data_in_master);
-        for(int i = 1; i < 16; i++){
+        for(int i = 0; i < 15; i++){
             port_out(p_fsynch_master, 0x00000000);
-            // rx_data[i] = port_in(p_data_in_master);
+            rx_data[i] = bitrev(port_in(p_data_in_master));
         }
+
+        port_out(p_fsynch_master, 0x00000001);
+        rx_data[15] = bitrev(port_in(p_data_in_master));
+
+   
     }
 }
 
