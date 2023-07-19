@@ -235,7 +235,7 @@ uint8_t i2c_master_req_data(void *app_data) {
 
     if (current_regnum != -1) {
         data = i2c_slave_registers[current_regnum];
-        printf("REGFILE: reg[%d] -> %x\n", current_regnum, data);
+        // printf("REGFILE: reg[%d] -> %x\n", current_regnum, data);
     } else {
         data = 0;
     }
@@ -251,7 +251,7 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
           // or write to a previously selected register
           if (current_regnum != -1) {
             i2c_slave_registers[current_regnum] = data;
-            printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
+            // printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
 
             // Inform the user application that the register has changed
             changed_regnum = current_regnum;
@@ -267,7 +267,7 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
           else {
             if (data < I2C_CONTROL_NUM_REGISTERS) {
               current_regnum = data;
-              printf("REGFILE: select reg[%d]\n", current_regnum);
+              // printf("REGFILE: select reg[%d]\n", current_regnum);
               response = I2C_SLAVE_ACK;
             } else {
               response = I2C_SLAVE_NACK;
