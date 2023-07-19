@@ -121,6 +121,7 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg) {
 
                 (void) reg_num;
                 (void) reg_data;
+                printstr("i2c\n");
             }
             break;
 
@@ -204,37 +205,14 @@ uint8_t i2c_slave_registers[I2C_CONTROL_NUM_REGISTERS];
 int current_regnum = -1;
 int changed_regnum = -1;
 
-/*
-// Handle application requests to get/set register values.
-case app.set_register(int regnum, uint8_t data):
-  if (regnum >= 0 && regnum < NUM_REGISTERS) {
-    registers[regnum] = data;
-  }
-  break;
-case app.get_register(int regnum) -> uint8_t data:
-  if (regnum >= 0 && regnum < NUM_REGISTERS) {
-    data = registers[regnum];
-  } else {
-    data = 0;
-  }
-  break;
-case app.get_changed_regnum() -> unsigned regnum:
-  regnum = changed_regnum;
-  break;
-  */
-
 
 I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_ack_read_req(void *app_data) {
-    printstr("i2c_ack_read_req\n");
-
     i2c_slave_ack_t response = I2C_SLAVE_NACK;
 
     // If no register has been selected using a previous write
     // transaction the NACK, otherwise ACK
-    if (current_regnum == -1) {
-      response = I2C_SLAVE_NACK;
-    } else {
+    if (current_regnum != -1) {
       response = I2C_SLAVE_ACK;
     }
 
@@ -243,8 +221,6 @@ i2c_slave_ack_t i2c_ack_read_req(void *app_data) {
 
 I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_ack_write_req(void *app_data) {
-    printstr("i2c_ack_write_req\n");
-
     // Write requests are always accepted
 
     return I2C_SLAVE_ACK;
@@ -269,8 +245,6 @@ uint8_t i2c_master_req_data(void *app_data) {
 
 I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
-    printf("xCORE i2c_master_sent_data: %u\n", data);
-
     i2c_slave_ack_t response = I2C_SLAVE_NACK;
 
     // The master is trying to write, which will either select a register
@@ -305,12 +279,8 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
 
 I2C_CALLBACK_ATTR
 void i2c_stop_bit(void *app_data) {
-    // The stop_bit function is timing critical. Needs to use printstr to meet
-    // timing and detect the start bit
-    printstr("i2c_stop_bit\n");
-
+    // The stop_bit function is timing critical. Exit quickly
     // The I2C transaction has completed, clear the regnum
-    printf("REGFILE: stop_bit\n");
     current_regnum = -1;
 }
 
@@ -322,9 +292,10 @@ int i2c_shutdown(void *app_data) {
 
 DECLARE_JOB(i2c_control, (chanend_t));
 void i2c_control(chanend_t c_i2c_reg) {
+    printf("i2c_control\n");
 
-    port_t p_scl = XS1_PORT_1A;
-    port_t p_sda = XS1_PORT_1B;
+    port_t p_scl = I2C_CONTROL_SLAVE_SCL;
+    port_t p_sda = I2C_CONTROL_SLAVE_SDA;
 
     i2c_callback_group_t i_i2c = {
         .ack_read_request = (ack_read_request_t) i2c_ack_read_req,
