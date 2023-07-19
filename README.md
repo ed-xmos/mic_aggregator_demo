@@ -52,7 +52,7 @@ The demo runs on the XCORE-AI Explorer board version 2 (with integrated XTAG deb
 
 An oscilloscope will also be handy in case of debug needed.
 
-==Note you will only be able to inject PDM data to two channels at a time due to a single pair of mics on the HW==
+*Note you will only be able to inject PDM data to two channels at a time due to a single pair of mics on the HW*
 
 
 Jumper Connections
@@ -78,3 +78,21 @@ To access other mic inputs use the following:
 | 5, 13 | 19 |
 | 6, 14 | 20 |
 | 7, 15 | 21 |
+
+
+For I2C control, make the following connections:
+
+- SCL IOL <-> Your I2C host SCL
+- SDA IOL <-> Your I2C host SDA
+- GND <-> Your I2C host ground
+
+There are XX registers which control the gain of each output channel. If using a raspberry Pi as the I2C host you may use the following commands:
+
+    $ i2cset -y 1 0x3c 0 100 #Set the gain on mic channel 0 to 100
+    $ i2cset -y 1 0x3c 15 50 #Set the gain on mic channel 15 to 50
+    $ i2cget -y 1 0x3c 0 #Get the gain on mic channel 0
+
+
+
+
+
