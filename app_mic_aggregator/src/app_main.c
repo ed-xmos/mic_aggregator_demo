@@ -79,7 +79,7 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
 
                 (void) reg_num;
                 (void) reg_data;
-                printstr("i2c\n");
+                printchar('*');
             }
             break;
 
@@ -110,7 +110,7 @@ i2c_slave_ack_t i2c_ack_read_req(void *app_data) {
     // If no register has been selected using a previous write
     // transaction the NACK, otherwise ACK
     if (current_regnum != -1) {
-      response = I2C_SLAVE_ACK;
+        response = I2C_SLAVE_ACK;
     }
 
     return response;
@@ -144,32 +144,35 @@ I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
     i2c_slave_ack_t response = I2C_SLAVE_NACK;
 
+    printf("i2c_master_sent_data\n");
+
+
     // The master is trying to write, which will either select a register
-          // or write to a previously selected register
-          if (current_regnum != -1) {
-            i2c_slave_registers[current_regnum] = data;
-            printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
+    // or write to a previously selected register
+    if (current_regnum != -1) {
+        i2c_slave_registers[current_regnum] = data;
+        printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
 
-            // Inform the user application that the register has changed
-            changed_regnum = current_regnum;
-            
-            // Note that, even on the same tile, we have 8 bytes of channel buffering
-            // so this will never block if mic_array is looping
-            chanend_t c_i2c_reg = *(chanend_t*)app_data;
-            s_chan_out_byte(c_i2c_reg, changed_regnum);
-            s_chan_out_byte(c_i2c_reg, data);
+        // Inform the user application that the register has changed
+        changed_regnum = current_regnum;
 
+        // Note that, even on the same tile, we have 8 bytes of channel buffering
+        // so this will never block if mic_array is looping
+        chanend_t c_i2c_reg = *(chanend_t*)app_data;
+        s_chan_out_byte(c_i2c_reg, changed_regnum);
+        s_chan_out_byte(c_i2c_reg, data);
+
+        response = I2C_SLAVE_ACK;
+    }
+    else {
+        if (data < I2C_CONTROL_NUM_REGISTERS) {
+            current_regnum = data;
+            printf("REGFILE: select reg[%d]\n", current_regnum);
             response = I2C_SLAVE_ACK;
-          }
-          else {
-            if (data < I2C_CONTROL_NUM_REGISTERS) {
-              current_regnum = data;
-              printf("REGFILE: select reg[%d]\n", current_regnum);
-              response = I2C_SLAVE_ACK;
-            } else {
-              response = I2C_SLAVE_NACK;
-            }
-          }
+        } else {
+            response = I2C_SLAVE_NACK;
+        }
+    }
 
     return response;
 }
@@ -178,7 +181,6 @@ I2C_CALLBACK_ATTR
 void i2c_stop_bit(void *app_data) {
     // The stop_bit function is timing critical. Exit quickly
     // The I2C transaction has completed, clear the regnum
-    printf("STOP BIT\n");
 
     current_regnum = -1;
 }
