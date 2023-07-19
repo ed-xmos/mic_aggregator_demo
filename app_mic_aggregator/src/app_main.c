@@ -5,7 +5,9 @@
 #include <stdlib.h>
 
 #include <xcore/channel.h>
+#include <xcore/channel_streaming.h>
 #include <xcore/parallel.h>
+#include <xcore/select.h>
 #include <xcore/hwtimer.h>
 #include <xscope.h>
 #include <xclib.h>
@@ -79,8 +81,8 @@ void monitor_tile1(void) {
 }
 
 
-DECLARE_JOB(hub, (chanend_t));
-void hub(chanend_t c_mic_array) {
+DECLARE_JOB(hub, (chanend_t, chanend_t));
+void hub(chanend_t c_mic_array, chanend_t c_i2c_reg) {
     printf("hub\n");
 
     unsigned write_buffer_idx = 0;
@@ -104,6 +106,29 @@ void hub(chanend_t c_mic_array) {
         write_buffer_idx++;
         if(write_buffer_idx == NUM_AUDIO_BUFFERS){
             write_buffer_idx = 0;
+        }
+
+        // Non-blocking channel read on c_i2c_reg
+        SELECT_RES(
+            CASE_THEN(c_i2c_reg, i2c_register_write),
+            DEFAULT_THEN(drop_through)
+        )
+        {
+            i2c_register_write:
+            {
+                uint8_t reg_num = s_chan_in_byte(c_i2c_reg);
+                uint8_t reg_data = s_chan_in_byte(c_i2c_reg);
+
+                (void) reg_num;
+                (void) reg_data;
+            }
+            break;
+
+            drop_through:
+            {
+                // Do nothing & fall-through
+            }
+            break;
         }
     }
 }
@@ -256,7 +281,12 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
 
             // Inform the user application that the register has changed
             changed_regnum = current_regnum;
-            // app.register_changed();
+            
+            // Note that, even on the same tile, we have 8 bytes of channel buffering
+            // so this will never block if mic_array is looping
+            chanend_t c_i2c_reg = *(chanend_t*)app_data;
+            s_chan_out_byte(c_i2c_reg, changed_regnum);
+            s_chan_out_byte(c_i2c_reg, data);
 
             response = I2C_SLAVE_ACK;
           }
@@ -290,8 +320,8 @@ int i2c_shutdown(void *app_data) {
 }
 
 
-DECLARE_JOB(i2c_control, (void));
-void i2c_control(void) {
+DECLARE_JOB(i2c_control, (chanend_t));
+void i2c_control(chanend_t c_i2c_reg) {
 
     port_t p_scl = XS1_PORT_1A;
     port_t p_sda = XS1_PORT_1B;
@@ -303,7 +333,7 @@ void i2c_control(void) {
         .master_sent_data = (master_sent_data_t) i2c_master_sent_data,
         .stop_bit = (stop_bit_t) i2c_stop_bit,
         .shutdown = (shutdown_t) i2c_shutdown,
-        .app_data = NULL,
+        .app_data = &c_i2c_reg,
     };
 
     i2c_slave(&i_i2c, p_scl, p_sda, I2C_CONTROL_SLAVE_ADDRESS);
@@ -379,6 +409,7 @@ void main_tile_0(chanend_t c_cross_tile[2]){
     PAR_JOBS(
         PJOB(pdm_mic_16, (c_cross_tile[0])),
         PJOB(pdm_mic_16_front_end, ()),
+        PJOB(i2c_control, (c_cross_tile[1])),
         PJOB(monitor_tile0, ())
     );
 }
@@ -389,10 +420,9 @@ void main_tile_1(chanend_t c_cross_tile[2]){
     device_pll_init();
 
     PAR_JOBS(
-        PJOB(hub, (c_cross_tile[0])),
+        PJOB(hub, (c_cross_tile[0], c_cross_tile[1])),
         PJOB(tdm16, ()),
         PJOB(tdm16_master_simple, ()),
-        PJOB(i2c_control, ()),
         PJOB(monitor_tile1, ())
     );
 }
