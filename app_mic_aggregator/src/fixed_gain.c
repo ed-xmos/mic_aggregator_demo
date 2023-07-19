@@ -25,31 +25,9 @@
 static inline unsigned cls(
     const int32_t a)
 {
-#ifdef __XS3A__
-
     unsigned res;
     asm( "cls %0, %1" : "=r"(res) : "r"(a) );
     return res;
-
-#else
-
-    if(a == 0 || a == -1)
-        return 32;
-    
-    if( a > 0 ){
-        for(int i = 30; i >= 0; i--){
-            if(a & (1<<i)) return 31-i;
-        }
-    } else {
-        for(int i = 30; i >= 0; i--){
-            unsigned mask = (1<<i);
-            if((a | mask) != a) return 31-i;
-        }
-    }
-    assert(0);
-    return 0;
-
-#endif //__XS3A__
 }
 
 void fixed_gain_set_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t buf_size) {
