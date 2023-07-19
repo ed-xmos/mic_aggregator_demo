@@ -48,23 +48,6 @@ void monitor_tile0(void) {
     }
 }
 
-DECLARE_JOB(monitor_tile1, (void));
-void monitor_tile1(void) {
-    printf("monitor_tile1\n");
-
-    hwtimer_t tmr = hwtimer_alloc();
-
-    while(1){
-        hwtimer_delay(tmr, XS1_TIMER_KHZ * 10000);
-        // printf("tdm_rx: %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n",
-        //   rx_data[0], rx_data[1], rx_data[2], rx_data[3],
-        //   rx_data[4], rx_data[5], rx_data[6], rx_data[7],
-        //   rx_data[8], rx_data[9], rx_data[10], rx_data[11],
-        //   rx_data[12], rx_data[13], rx_data[14], rx_data[15]
-        //   );
-    }
-}
-
 
 DECLARE_JOB(hub, (chanend_t, audio_frame_t **));
 void hub(chanend_t c_mic_array, audio_frame_t **read_buffer_ptr) {
@@ -100,7 +83,7 @@ void hub(chanend_t c_mic_array, audio_frame_t **read_buffer_ptr) {
 
 void main_tile_0(chanend_t c_cross_tile){
     PAR_JOBS(
-        PJOB(pdm_mic_16, (c_cross_tile)),
+        PJOB(pdm_mic_16, (c_cross_tile)), // Note spawns MIC_ARRAY_NUM_DECIMATOR_TASKS threads
         PJOB(pdm_mic_16_front_end, ()),
         PJOB(monitor_tile0, ())
     );
@@ -117,6 +100,6 @@ void main_tile_1(chanend_t c_cross_tile){
         PJOB(hub, (c_cross_tile, read_buffer_ptr)),
         PJOB(tdm16_slave, (read_buffer_ptr)),
         PJOB(tdm16_master_simple, ()),
-        PJOB(monitor_tile1, ())
+        PJOB(tdm_master_monitor, ()) // Temp monitor for checking reception of TDM frames. Separate task so non-intrusive
     );
 }
