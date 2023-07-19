@@ -2,11 +2,15 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <xcore/port.h>
+#include <xcore/hwtimer.h>
 #include <xscope.h>
 #include <xclib.h>
 #include <stdio.h>
 
 #include "app_config.h"
+
+// Global for now to allow the monitor to function
+int32_t rx_data[16] = {0};
 
 
 void tdm16_master_simple(void) {
@@ -49,8 +53,6 @@ void tdm16_master_simple(void) {
     port_set_trigger_time(p_data_in_master, 32 + 1 + offset);
     set_pad_delay(p_data_in_master, 4); // 2,3,4,5 work. 6 not settable. 1 Does not work. So choose 4 as midpoint
 
-    int32_t rx_data[16] = {0};
-
     clock_start(tdm_master_clk);
 
     while(1){
@@ -58,7 +60,7 @@ void tdm16_master_simple(void) {
 
             port_out(p_fsynch_master, 0x00000000);
             if(i && i < 3){ // Output first two channels only due to performance limit of xscope
-                xscope_int(i - 1, rx_data[i - 1]);
+                // xscope_int(i - 1, rx_data[i - 1]);
             }
             rx_data[i] = bitrev(port_in(p_data_in_master));
         }
@@ -67,3 +69,20 @@ void tdm16_master_simple(void) {
         rx_data[15] = bitrev(port_in(p_data_in_master));
     }
 }
+
+void tdm_master_monitor(void) {
+    printf("tdm_master_monitor\n");
+
+    hwtimer_t tmr = hwtimer_alloc();
+
+    while(1){
+        hwtimer_delay(tmr, XS1_TIMER_KHZ * 100);
+        printf("tdm_rx: %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n",
+          rx_data[0], rx_data[1], rx_data[2], rx_data[3],
+          rx_data[4], rx_data[5], rx_data[6], rx_data[7],
+          rx_data[8], rx_data[9], rx_data[10], rx_data[11],
+          rx_data[12], rx_data[13], rx_data[14], rx_data[15]
+          );
+    }
+}
+
