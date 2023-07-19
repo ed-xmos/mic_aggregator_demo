@@ -9,6 +9,7 @@
 #include <xcore/hwtimer.h>
 #include <xscope.h>
 #include <xclib.h>
+#include <print.h>
 
 #include "app_config.h"
 #include "mic_array.h"
@@ -169,31 +170,108 @@ void tdm16(void) {
     i2s_tdm_slave_tx_16_thread(&ctx);
 }
 
+#define NUM_REGISTERS 10
+uint8_t registers[NUM_REGISTERS];
 
+// This variable is set to -1 if no current register has been selected.
+// If the I2C master does a write transaction to select the register then
+// the variable will be updated to the register the master wants to
+// read/update.
+int current_regnum = -1;
+int changed_regnum = -1;
+
+/*
+// Handle application requests to get/set register values.
+case app.set_register(int regnum, uint8_t data):
+  if (regnum >= 0 && regnum < NUM_REGISTERS) {
+    registers[regnum] = data;
+  }
+  break;
+case app.get_register(int regnum) -> uint8_t data:
+  if (regnum >= 0 && regnum < NUM_REGISTERS) {
+    data = registers[regnum];
+  } else {
+    data = 0;
+  }
+  break;
+case app.get_changed_regnum() -> unsigned regnum:
+  regnum = changed_regnum;
+  break;
+  */
 
 
 I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_ack_read_req(void *app_data) {
     printstr("i2c_ack_read_req\n");
-    return I2C_SLAVE_ACK;
+
+    i2c_slave_ack_t response = I2C_SLAVE_NACK;
+
+    // If no register has been selected using a previous write
+    // transaction the NACK, otherwise ACK
+    if (current_regnum == -1) {
+      response = I2C_SLAVE_NACK;
+    } else {
+      response = I2C_SLAVE_ACK;
+    }
+
+    return response;
 }
 
 I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_ack_write_req(void *app_data) {
     printstr("i2c_ack_write_req\n");
+
+    // Write requests are always accepted
+
     return I2C_SLAVE_ACK;
 }
 
 I2C_CALLBACK_ATTR
 uint8_t i2c_master_req_data(void *app_data) {
+    // The master is trying to read, if a register is selected then
+    // return the value (other return 0).
+
     uint8_t data = 0;
+
+    if (current_regnum != -1) {
+        data = registers[current_regnum];
+        printf("REGFILE: reg[%d] -> %x\n", current_regnum, data);
+    } else {
+        data = 0;
+    }
+
     return data;
 }
 
 I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
-    printf("xCORE i2c_master_sent_data\n", data);
-    return I2C_SLAVE_ACK;
+    printf("xCORE i2c_master_sent_data: %u\n", data);
+
+    i2c_slave_ack_t response = I2C_SLAVE_NACK;
+
+    // The master is trying to write, which will either select a register
+          // or write to a previously selected register
+          if (current_regnum != -1) {
+            registers[current_regnum] = data;
+            printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
+
+            // Inform the user application that the register has changed
+            changed_regnum = current_regnum;
+            // app.register_changed();
+
+            response = I2C_SLAVE_ACK;
+          }
+          else {
+            if (data < NUM_REGISTERS) {
+              current_regnum = data;
+              printf("REGFILE: select reg[%d]\n", current_regnum);
+              response = I2C_SLAVE_ACK;
+            } else {
+              response = I2C_SLAVE_NACK;
+            }
+          }
+
+    return response;
 }
 
 I2C_CALLBACK_ATTR
@@ -201,6 +279,10 @@ void i2c_stop_bit(void *app_data) {
     // The stop_bit function is timing critical. Needs to use printstr to meet
     // timing and detect the start bit
     printstr("i2c_stop_bit\n");
+
+    // The I2C transaction has completed, clear the regnum
+    printf("REGFILE: stop_bit\n");
+    current_regnum = -1;
 }
 
 I2C_CALLBACK_ATTR
