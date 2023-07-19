@@ -60,9 +60,6 @@ I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
     i2c_slave_ack_t response = I2C_SLAVE_NACK;
 
-    printf("i2c_master_sent_data\n");
-
-
     // The master is trying to write, which will either select a register
     // or write to a previously selected register
     if (current_regnum != -1) {

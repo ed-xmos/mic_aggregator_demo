@@ -31,9 +31,9 @@
 #define TDM_SIMPLE_MASTER_CLK_BLK           XS1_CLKBLK_2
 
 #define I2C_CONTROL_SLAVE_ADDRESS           0x3c    
-#define I2C_CONTROL_NUM_REGISTERS           (16 * (4 + 1))  // Number of 8b registers
-#define I2C_CONTROL_SLAVE_SCL               XS1_PORT_1N     //X0D37, SCL
-#define I2C_CONTROL_SLAVE_SDA               XS1_PORT_1O     //X0D38, SDA
+#define I2C_CONTROL_NUM_REGISTERS           (16 * 1)    // Number of 8b registers
+#define I2C_CONTROL_SLAVE_SCL               XS1_PORT_1N //X0D37, SCL
+#define I2C_CONTROL_SLAVE_SDA               XS1_PORT_1O //X0D38, SDA
 
 
 // Configuration checks

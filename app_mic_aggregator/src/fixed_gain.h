@@ -32,9 +32,14 @@ typedef struct {
 /// @param fg state being constructed for use by fixed_gain_apply
 /// @param multiplier value that will be applied to all the inputs in fixed_gain_apply, must be 
 /// greater than 0
-/// @param buf_size size of input buffer that will be passedt to fixed_gain_apply, must be no more
+/// @param max multiplier value that will ever be applied to all the inputs in fixed_gain_apply, must be 
+/// greater than 0
+/// @param buf_size size of input buffer that will be passed to fixed_gain_apply, must be no more
 /// than VECTOR_SIZE
-void fixed_gain_set_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t buf_size);
+void fixed_gain_init_all_multipliers(fixed_gain_t* fg, int32_t multiplier, int32_t max_multiplier, int32_t buf_size);
+
+
+void fixed_gain_set_single_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t idx);
 
 
 /// @brief Do in place saturating multiplication of all elements in input by the multiplier specified

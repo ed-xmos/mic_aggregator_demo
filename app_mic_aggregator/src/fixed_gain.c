@@ -30,13 +30,14 @@ static inline unsigned cls(
     return res;
 }
 
-void fixed_gain_set_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t buf_size) {
+void fixed_gain_init_all_multipliers(fixed_gain_t* fg, int32_t multiplier, int32_t max_multiplier, int32_t buf_size) {
 	xassert(NULL != fg);
 
 	// To support gain of -1 or 0 (which have 32 sign bits) an extra
 	// branch would be required in this function to clamp headroom
 	// to <= 30
-	xassert(multiplier > 0);
+    xassert(multiplier > 0);
+    xassert(max_multiplier > 0);
 	xassert(buf_size <= VECTOR_SIZE);
 
 	// vstrpv requires a byte mask of LSB bytes to copy
@@ -48,7 +49,7 @@ void fixed_gain_set_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t buf
 	// be shifted away.
 	// As we assert multiplier is greater that zero we know that 
 	// cls(multiplier) - 1 <= VLMUL_POST_SHIFT is always true.
-	int32_t headroom = cls(multiplier) - 1;
+	int32_t headroom = cls(max_multiplier) - 1;
 
 	// input shift must be minus number as there is no left shift instruction
 	fg->input_shift = -VLMUL_POST_SHIFT + headroom; // mul_shift + input_shift == VLMUL_POST_SHIFT
@@ -57,6 +58,20 @@ void fixed_gain_set_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t buf
 	for(int i = 0; i < buf_size; ++i) {
 		fg->mul_buf[i] = multiplier;
 	}
+}
+
+void fixed_gain_set_single_multiplier(fixed_gain_t* fg, int32_t multiplier, int32_t idx) {
+
+    // To support gain of -1 or 0 (which have 32 sign bits) an extra
+    // branch would be required in this function to clamp headroom
+    // to <= 30
+    xassert(multiplier > 0);
+
+    // input shift must be minus number as there is no left shift instruction
+    int32_t headroom = fg->input_shift + VLMUL_POST_SHIFT;
+    multiplier <<= headroom;
+
+    fg->mul_buf[idx] = multiplier;
 }
 
 

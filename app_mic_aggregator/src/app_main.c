@@ -46,8 +46,10 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
     unsigned write_buffer_idx = 0;
     audio_frame_t audio_frames[NUM_AUDIO_BUFFERS] = {{{{0}}}};
 
-    fixed_gain_t fg;
-    fixed_gain_set_multiplier(&fg, 1, VECTOR_SIZE);
+    fixed_gain_t fg[2];
+    uint8_t max_multiplier = 255;
+    fixed_gain_init_all_multipliers(&fg[0], 1, max_multiplier, VECTOR_SIZE);
+    fixed_gain_init_all_multipliers(&fg[1], 1, max_multiplier, VECTOR_SIZE);
 
     int32_t old_t = 0;
     while(1){
@@ -56,9 +58,8 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
         old_t = t0;        
         ma_frame_rx((int32_t*)&audio_frames[write_buffer_idx], c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
 
-        for(int i = 0; i < 16; i += 8){
-            fixed_gain_apply(&fg, &audio_frames[write_buffer_idx].data[i][0]);
-        }
+        fixed_gain_apply(&fg[0], &audio_frames[write_buffer_idx].data[0][0]);
+        fixed_gain_apply(&fg[1], &audio_frames[write_buffer_idx].data[8][0]);
 
         *read_buffer_ptr = &audio_frames[write_buffer_idx];  // update read buffer for TDM
 
@@ -79,9 +80,10 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
                 uint8_t reg_num = s_chan_in_byte(c_i2c_reg);
                 uint8_t reg_data = s_chan_in_byte(c_i2c_reg);
 
-                (void) reg_num;
-                (void) reg_data;
-                printchar('*');
+                unsigned fg_block = reg_num >> 3; // Div by 8
+                unsigned fg_idx = reg_num & 0x07; // Mod by 8
+
+                fixed_gain_set_single_multiplier(&fg[fg_block], reg_data, fg_idx);
             }
             break;
 
