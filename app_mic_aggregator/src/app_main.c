@@ -15,6 +15,7 @@
 #include "device_pll_ctrl.h"
 #include "mic_array_wrapper.h"
 #include "i2s_tdm_slave.h"
+#include "i2c.h"
 
 #define NUM_AUDIO_BUFFERS   3
 
@@ -168,6 +169,68 @@ void tdm16(void) {
     i2s_tdm_slave_tx_16_thread(&ctx);
 }
 
+
+
+
+I2C_CALLBACK_ATTR
+i2c_slave_ack_t i2c_ack_read_req(void *app_data) {
+    printstr("i2c_ack_read_req\n");
+    return I2C_SLAVE_ACK;
+}
+
+I2C_CALLBACK_ATTR
+i2c_slave_ack_t i2c_ack_write_req(void *app_data) {
+    printstr("i2c_ack_write_req\n");
+    return I2C_SLAVE_ACK;
+}
+
+I2C_CALLBACK_ATTR
+uint8_t i2c_master_req_data(void *app_data) {
+    uint8_t data = 0;
+    return data;
+}
+
+I2C_CALLBACK_ATTR
+i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
+    printf("xCORE i2c_master_sent_data\n", data);
+    return I2C_SLAVE_ACK;
+}
+
+I2C_CALLBACK_ATTR
+void i2c_stop_bit(void *app_data) {
+    // The stop_bit function is timing critical. Needs to use printstr to meet
+    // timing and detect the start bit
+    printstr("i2c_stop_bit\n");
+}
+
+I2C_CALLBACK_ATTR
+int i2c_shutdown(void *app_data) {
+    return 0;
+}
+
+#define DEVICE_ADDR  0x3c
+
+
+DECLARE_JOB(i2c_control, (void));
+void i2c_control(void) {
+
+    port_t p_scl = XS1_PORT_1A;
+    port_t p_sda = XS1_PORT_1B;
+
+    i2c_callback_group_t i_i2c = {
+        .ack_read_request = (ack_read_request_t) i2c_ack_read_req,
+        .ack_write_request = (ack_write_request_t) i2c_ack_write_req,
+        .master_requires_data = (master_requires_data_t) i2c_master_req_data,
+        .master_sent_data = (master_sent_data_t) i2c_master_sent_data,
+        .stop_bit = (stop_bit_t) i2c_stop_bit,
+        .shutdown = (shutdown_t) i2c_shutdown,
+        .app_data = NULL,
+    };
+
+    i2c_slave(&i_i2c, p_scl, p_sda, DEVICE_ADDR);
+}
+
+
 DECLARE_JOB(tdm16_master_simple, (void));
 void tdm16_master_simple(void) {
     printf("tdm16_master_simple\n");
@@ -250,6 +313,7 @@ void main_tile_1(chanend_t c_cross_tile){
         PJOB(hub, (c_cross_tile)),
         PJOB(tdm16, ()),
         PJOB(tdm16_master_simple, ()),
+        PJOB(i2c_control, ()),
         PJOB(monitor_tile1, ())
     );
 }
