@@ -9,8 +9,8 @@
 #define MIC_ARRAY_CONFIG_MCLK_FREQ          24576000
 #define MIC_ARRAY_CONFIG_PDM_FREQ           3072000
 #define MIC_ARRAY_CONFIG_USE_DDR            1
-#define MIC_ARRAY_CONFIG_PORT_MCLK          XS1_PORT_1D // X0D11, J14 - Pin 15
-#define MIC_ARRAY_CONFIG_PORT_PDM_CLK       XS1_PORT_1A // X0D00, J14 - Pin 2
+#define MIC_ARRAY_CONFIG_PORT_MCLK          XS1_PORT_1D // X0D11, J14 - Pin 15, '11'
+#define MIC_ARRAY_CONFIG_PORT_PDM_CLK       XS1_PORT_1A // X0D00, J14 - Pin 2, '00'
 #define MIC_ARRAY_CONFIG_PORT_PDM_DATA      XS1_PORT_8B // X0D14..X0D21 | J14 - Pin 3,5,12,14 and Pin 6,7,10,11
 #define MIC_ARRAY_CONFIG_MIC_COUNT          16
 #define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME  1
@@ -26,8 +26,8 @@
 #define TDM_SLAVEPORT_CLK_BLK               XS1_CLKBLK_1
 #define TDM_SLAVETX_OFFSET                  1
 
-#define TDM_SIMPLE_MASTER_FSYNCH            XS1_PORT_1M // X1D36, J10 - pin 2
-#define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15
+#define TDM_SIMPLE_MASTER_FSYNCH            XS1_PORT_1M // X1D36, J10 - pin 2, '36'
+#define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15, '38'
 #define TDM_SIMPLE_MASTER_CLK_BLK           XS1_CLKBLK_2
 
 // Configuration checks
