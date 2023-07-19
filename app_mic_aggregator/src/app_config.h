@@ -30,6 +30,10 @@
 #define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15
 #define TDM_SIMPLE_MASTER_CLK_BLK           XS1_CLKBLK_2
 
+#define I2C_CONTROL_SLAVE_ADDRESS           0x3c    
+#define I2C_CONTROL_NUM_REGISTERS           (16 * (4 + 1)) // Number of 8b registers
+
+
 // Configuration checks
 #if MIC_ARRAY_CONFIG_MIC_COUNT > 8 && MIC_ARRAY_NUM_DECIMATOR_TASKS < 2
 #error "MIC_ARRAY_NUM_DECIMATOR_TASKS: Unsupported value"

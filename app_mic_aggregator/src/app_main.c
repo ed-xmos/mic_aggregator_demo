@@ -170,8 +170,7 @@ void tdm16(void) {
     i2s_tdm_slave_tx_16_thread(&ctx);
 }
 
-#define NUM_REGISTERS 10
-uint8_t registers[NUM_REGISTERS];
+uint8_t i2c_slave_registers[I2C_CONTROL_NUM_REGISTERS];
 
 // This variable is set to -1 if no current register has been selected.
 // If the I2C master does a write transaction to select the register then
@@ -234,7 +233,7 @@ uint8_t i2c_master_req_data(void *app_data) {
     uint8_t data = 0;
 
     if (current_regnum != -1) {
-        data = registers[current_regnum];
+        data = i2c_slave_registers[current_regnum];
         printf("REGFILE: reg[%d] -> %x\n", current_regnum, data);
     } else {
         data = 0;
@@ -252,7 +251,7 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
     // The master is trying to write, which will either select a register
           // or write to a previously selected register
           if (current_regnum != -1) {
-            registers[current_regnum] = data;
+            i2c_slave_registers[current_regnum] = data;
             printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
 
             // Inform the user application that the register has changed
@@ -262,7 +261,7 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
             response = I2C_SLAVE_ACK;
           }
           else {
-            if (data < NUM_REGISTERS) {
+            if (data < I2C_CONTROL_NUM_REGISTERS) {
               current_regnum = data;
               printf("REGFILE: select reg[%d]\n", current_regnum);
               response = I2C_SLAVE_ACK;
@@ -290,8 +289,6 @@ int i2c_shutdown(void *app_data) {
     return 0;
 }
 
-#define DEVICE_ADDR  0x3c
-
 
 DECLARE_JOB(i2c_control, (void));
 void i2c_control(void) {
@@ -309,7 +306,7 @@ void i2c_control(void) {
         .app_data = NULL,
     };
 
-    i2c_slave(&i_i2c, p_scl, p_sda, DEVICE_ADDR);
+    i2c_slave(&i_i2c, p_scl, p_sda, I2C_CONTROL_SLAVE_ADDRESS);
 }
 
 
@@ -376,23 +373,23 @@ void tdm16_master_simple(void) {
 
 ///////// Tile main functions where we par off the threads ///////////
 
-void main_tile_0(chanend_t c_cross_tile){
+void main_tile_0(chanend_t c_cross_tile[2]){
     printf("Hello world tile[0]\n");
 
     PAR_JOBS(
-        PJOB(pdm_mic_16, (c_cross_tile)),
+        PJOB(pdm_mic_16, (c_cross_tile[0])),
         PJOB(pdm_mic_16_front_end, ()),
         PJOB(monitor_tile0, ())
     );
 }
 
-void main_tile_1(chanend_t c_cross_tile){
+void main_tile_1(chanend_t c_cross_tile[2]){
     printf("Hello world tile[1]\n");
 
     device_pll_init();
 
     PAR_JOBS(
-        PJOB(hub, (c_cross_tile)),
+        PJOB(hub, (c_cross_tile[0])),
         PJOB(tdm16, ()),
         PJOB(tdm16_master_simple, ()),
         PJOB(i2c_control, ()),
