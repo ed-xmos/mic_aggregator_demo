@@ -2,6 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <stdio.h>
+#include <string.h>
 
 #include "tdm_slave_wrapper.h"
 
@@ -22,13 +23,12 @@ void i2s_send(void *app_data, size_t n, int32_t *send_data)
     audio_frame_t *read_buffer = *read_buffer_ptr; // Make copy just in case mics move on buffer halfway through frame
 
     if(read_buffer != NULL){
-        for(int ch = 0; ch < 16; ch++){
-            send_data[ch] = read_buffer->data[ch][0];
-        }
+        // for(int ch = 0; ch < 16; ch++){
+        //     send_data[ch] = read_buffer->data[ch][0];
+        // }
+        memcpy(send_data, &read_buffer->data[0][0], 16 * sizeof(*send_data)); // We can do this because samples are contiguous in memory for framesize == 1
     } else {
-        for(int ch = 0; ch < 16; ch++){
-            send_data[ch] = 0;
-        }
+        memset(send_data, 0, 16 * sizeof(*send_data));
     }
 }
 

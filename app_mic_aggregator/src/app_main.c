@@ -34,22 +34,6 @@ void pdm_mic_16_front_end(void) {
     app_pdm_rx_task();
 }
 
-extern volatile int32_t t_dec_exec;
-extern volatile int32_t t_dec_per;
-volatile int32_t samp;
-
-DECLARE_JOB(monitor_tile0, (void));
-void monitor_tile0(void) {
-    printf("monitor_tile0\n");
-
-    hwtimer_t tmr = hwtimer_alloc();
-
-    while(1){
-        hwtimer_delay(tmr, XS1_TIMER_KHZ * 1000);
-        // printf("dec period: %ld exec: %ld\n", t_dec_per, t_dec_exec);
-    }
-}
-
 
 DECLARE_JOB(hub, (chanend_t, audio_frame_t **));
 void hub(chanend_t c_mic_array, audio_frame_t **read_buffer_ptr) {
