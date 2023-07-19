@@ -7,6 +7,8 @@
 #include <string>
 #include <cassert>
 
+#include <xcore/hwtimer.h>
+
 #include "xmath/xmath.h"
 #include "mic_array/etc/fir_1x16_bit.h"
 #include "decimator_subtask.h"
@@ -217,6 +219,9 @@ void my_mic_array::MyTwoStageDecimator<MIC_COUNT,S2_DEC_FACTOR,S2_TAP_COUNT>::In
 
 }
 
+volatile int t_dec_exec = 0;
+volatile int t_dec_per = 0;
+int old_t = 0;
 
 
 template <unsigned MIC_COUNT, unsigned S2_DEC_FACTOR, unsigned S2_TAP_COUNT>
@@ -225,8 +230,12 @@ void my_mic_array::MyTwoStageDecimator<MIC_COUNT,S2_DEC_FACTOR,S2_TAP_COUNT>
         int32_t sample_out[MIC_COUNT],
         uint32_t pdm_block[BLOCK_SIZE])
 {
+  int t0 = get_reference_time();
   decimator_subtask_run(MIC_COUNT,
     (uint32_t*)this->stage1.pdm_history, this->stage1.filter_coef,
     S2_DEC_FACTOR, this->stage2.filters,
     pdm_block, sample_out);
+  t_dec_exec = get_reference_time() - t0;
+  t_dec_per = t0- old_t;
+  old_t = t0;
 }
