@@ -40,7 +40,7 @@ i2s_restart_t i2s_restart_check(void *app_data)
 
 
 void tdm16_slave(audio_frame_t **read_buffer_ptr) {
-    printf("tdm16\n");
+    printf("tdm16_slave\n");
 
     i2s_tdm_ctx_t ctx;
     i2s_callback_group_t i_i2s = {

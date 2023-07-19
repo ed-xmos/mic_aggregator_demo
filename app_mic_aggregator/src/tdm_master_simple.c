@@ -20,7 +20,7 @@ void tdm16_master_simple(void) {
     port_t p_data_in_master = TDM_SIMPLE_MASTER_DATA;
     xclock_t tdm_master_clk = TDM_SIMPLE_MASTER_CLK_BLK;
 
-    const int offset = 1;
+    const int offset = TDM_SLAVETX_OFFSET;
 
     clock_enable(tdm_master_clk);
     clock_set_source_port(tdm_master_clk, TDM_SLAVEPORT_BCLK);
