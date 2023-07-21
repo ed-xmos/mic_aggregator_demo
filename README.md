@@ -57,6 +57,8 @@ An oscilloscope will also be handy in case of debug needed.
 
 *Note you will only be able to inject PDM data to two channels at a time due to a single pair of mics on the HW*
 
+If you wish to see all 16 mics running then an external mic board with 16 mics (DDR connected to 8 data lines) is required.
+
 
 Jumper Connections
 ------------------
