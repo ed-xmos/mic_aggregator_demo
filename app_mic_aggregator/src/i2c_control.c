@@ -2,14 +2,34 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <xcore/parallel.h>
 #include <xcore/channel.h>
 
 #include "app_config.h"
+#include "app_main.h"
 #include "i2c.h"
 
-
-uint8_t i2c_slave_registers[I2C_CONTROL_NUM_REGISTERS];
+// 16 pairs of 8b registers. MSB first LSB last (Little endian)
+// Initial gain = 1
+uint8_t i2c_slave_registers[I2C_CONTROL_NUM_REGISTERS] = {
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), // Ch 0
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), // Ch 7
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), // Ch 8
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT),
+        UPPER_BYTE_FROM_U16(MIC_GAIN_INIT), UPPER_BYTE_FROM_U16(MIC_GAIN_INIT) // Ch 15
+    };
 
 // This variable is set to -1 if no current register has been selected.
 // If the I2C master does a write transaction to select the register then
@@ -71,10 +91,20 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
 
         // Forward command to hub on the other tile
         // Note that, even on the same tile, we have 8 bytes of channel buffering
-        // so this will never block if mic_array is looping
+        // so this will never block if mic_array and therefore the hub is looping
         chanend_t c_i2c_reg = *(chanend_t*)app_data;
-        s_chan_out_byte(c_i2c_reg, changed_regnum);
-        s_chan_out_byte(c_i2c_reg, data);
+
+        bool is_lower_byte = changed_regnum & 0x1;
+        unsigned channel = changed_regnum >> 1; // Two bytes of gain per channel
+        uint8_t data_h = i2c_slave_registers[channel << 1]; 
+        uint8_t data_l = i2c_slave_registers[(channel << 1) + 1]; 
+
+        // Only update when lower byte is written
+        if(is_lower_byte){
+            s_chan_out_byte(c_i2c_reg, channel);
+            s_chan_out_byte(c_i2c_reg, data_h);
+            s_chan_out_byte(c_i2c_reg, data_l);
+        }
 
         response = I2C_SLAVE_ACK;
     }

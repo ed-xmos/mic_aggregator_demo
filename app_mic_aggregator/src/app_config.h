@@ -31,9 +31,11 @@
 #define TDM_SIMPLE_MASTER_CLK_BLK           XS1_CLKBLK_2
 
 #define I2C_CONTROL_SLAVE_ADDRESS           0x3c    
-#define I2C_CONTROL_NUM_REGISTERS           (16 * 1)    // Number of 8b registers
+#define I2C_CONTROL_NUM_REGISTERS           (MIC_ARRAY_CONFIG_MIC_COUNT * 2) // Number of 8b registers. Each gain is 16b Little Endian (MSB @ 0, LSB @ 1)
 #define I2C_CONTROL_SLAVE_SCL               XS1_PORT_1N //X0D37, SCL
 #define I2C_CONTROL_SLAVE_SDA               XS1_PORT_1O //X0D38, SDA
+
+#define MIC_GAIN_INIT                       1 // Allowed values 0 to 65535
 
 
 // Configuration checks

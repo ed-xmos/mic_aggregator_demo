@@ -2,6 +2,7 @@
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
 #include <stdio.h>
+#include <limits.h>
 
 #include <xcore/channel.h>
 #include <xcore/channel_streaming.h>
@@ -47,7 +48,7 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
     audio_frame_t audio_frames[NUM_AUDIO_BUFFERS] = {{{{0}}}};
 
     fixed_gain_t fg[2];
-    uint8_t max_multiplier = 255;
+    uint16_t max_multiplier = USHRT_MAX;
     fixed_gain_init_all_multipliers(&fg[0], 1, max_multiplier, VECTOR_SIZE);
     fixed_gain_init_all_multipliers(&fg[1], 1, max_multiplier, VECTOR_SIZE);
 
@@ -77,13 +78,15 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
         {
             i2c_register_write:
             {
-                uint8_t reg_num = s_chan_in_byte(c_i2c_reg);
-                uint8_t reg_data = s_chan_in_byte(c_i2c_reg);
+                uint8_t channel = s_chan_in_byte(c_i2c_reg);
+                uint8_t data_h = s_chan_in_byte(c_i2c_reg);
+                uint8_t data_l = s_chan_in_byte(c_i2c_reg);
 
-                unsigned fg_block = reg_num >> 3; // Div by 8
-                unsigned fg_idx = reg_num & 0x07; // Mod by 8
+                unsigned fg_idx = channel & 0x07; // Mod by 8
+                unsigned fg_block = channel >> 3; // Div by 8
+                int32_t gain = U16_FROM_BYTES(data_h, data_l);
 
-                fixed_gain_set_single_multiplier(&fg[fg_block], reg_data, fg_idx);
+                fixed_gain_set_single_multiplier(&fg[fg_block], gain, fg_idx);
             }
             break;
 

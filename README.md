@@ -91,13 +91,59 @@ For I2C control, make the following connections:
 - SDA IOL <-> Your I2C host SDA
 - GND <-> Your I2C host ground
 
-There are XX registers which control the gain of each output channel. If using a raspberry Pi as the I2C host you may use the following commands:
+There are 32 registers which control the gain of each of the 16 output channels. The 8b registers contain the 
+upper 8b and lower 8b of the mic gain respectively. The initial gain is set to 1, which is quiet due to the 
+mic_array output being scaled to allow acoustic overload of the mics without clipping. Typically a gain of
+a few hundred works for normal conditions. The gain is only applied after the lower byte is written.
 
-    $ i2cset -y 1 0x3c 0 100 #Set the gain on mic channel 0 to 100
-    $ i2cset -y 1 0x3c 15 50 #Set the gain on mic channel 15 to 50
-    $ i2cget -y 1 0x3c 0 #Get the gain on mic channel 0
+The gain applied is saturating so no overflow will occur, only clipping.
+
+| Register | Value |
+| -------- | ------- |
+| 0 | Channel 0 upper gain byte |
+| 1 | Channel 0 lower gain byte |
+| 2 | Channel 1 upper gain byte |
+| 3 | Channel 1 lower gain byte |
+| 4 | Channel 2 upper gain byte |
+| 5 | Channel 2 lower gain byte |
+| 6 | Channel 3 upper gain byte |
+| 7 | Channel 3 lower gain byte |
+| 8 | Channel 4 upper gain byte |
+| 9 | Channel 4 lower gain byte |
+| 10 | Channel 5 upper gain byte |
+| 11 | Channel 5 lower gain byte |
+| 12 | Channel 6 upper gain byte |
+| 13 | Channel 6 lower gain byte |
+| 14 | Channel 7 upper gain byte |
+| 15 | Channel 7 lower gain byte |
+| 16 | Channel 8 upper gain byte |
+| 17 | Channel 8 lower gain byte |
+| 18 | Channel 9 upper gain byte |
+| 19 | Channel 9 lower gain byte |
+| 20 | Channel 10 upper gain byte |
+| 21 | Channel 10 lower gain byte |
+| 22 | Channel 11 upper gain byte |
+| 23 | Channel 11 lower gain byte |
+| 24 | Channel 12 upper gain byte |
+| 25 | Channel 12 lower gain byte |
+| 26 | Channel 13 upper gain byte |
+| 27 | Channel 13 lower gain byte |
+| 28 | Channel 14 upper gain byte |
+| 29 | Channel 14 lower gain byte |
+| 30 | Channel 15 upper gain byte |
+| 31 | Channel 15 lower gain byte |
 
 
+If using a raspberry Pi as the I2C host you may use the following commands:
+
+    $ i2cset -y 1 0x3c 0 0 #Set the gain on mic channel 0 to 100
+    $ i2cset -y 1 0x3c 1 100 #Set the gain on mic channel 0 to 100
+
+    $ i2cget -y 1 0x3c 0 #Get the upper byte of gain on mic channel 0
+    $ i2cget -y 1 0x3c 1 #Get the lower byte of gain on mic channel 0
+
+    $ i2cset -y 1 0x3c 16 1 #Set the gain on mic channel 8 to 256
+    $ i2cset -y 1 0x3c 1 0 #Set the gain on mic channel 8 to 256
 
 
 
