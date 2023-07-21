@@ -17,7 +17,6 @@
 #include "mic_array_wrapper.h"
 #include "tdm_slave_wrapper.h"
 #include "tdm_master_simple.h"
-#include "fixed_gain.h"
 #include "i2c_control.h"
 
 volatile int32_t timing = 0;
@@ -28,7 +27,7 @@ void pdm_mic_16(chanend_t c_mic_array) {
 
     app_mic_array_init();
     // app_mic_array_assertion_disable();
-    app_mic_array_assertion_enable();
+    app_mic_array_assertion_enable();   // Inform if timing is not met
     app_mic_array_task(c_mic_array);
 }
 
@@ -39,6 +38,14 @@ void pdm_mic_16_front_end(void) {
     app_pdm_rx_task();
 }
 
+static inline int32_t scalar_gain(int32_t samp, int32_t gain){
+    int64_t accum = (int64_t)samp * (int32_t)gain;
+    accum = accum > INT_MAX ? INT_MAX : accum;
+    accum = accum < INT_MIN ? INT_MIN : accum;
+
+    return (int32_t)accum;
+}
+
 
 DECLARE_JOB(hub, (chanend_t, chanend_t, audio_frame_t **));
 void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer_ptr) {
@@ -47,11 +54,10 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
     unsigned write_buffer_idx = 0;
     audio_frame_t audio_frames[NUM_AUDIO_BUFFERS] = {{{{0}}}};
 
-    fixed_gain_t fg[2];
-    uint16_t max_multiplier = USHRT_MAX;
-    fixed_gain_init_all_multipliers(&fg[0], 1, max_multiplier, VECTOR_SIZE);
-    fixed_gain_init_all_multipliers(&fg[1], 1, max_multiplier, VECTOR_SIZE);
-
+    uint16_t gains[MIC_ARRAY_CONFIG_MIC_COUNT] = {MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT,
+                                                  MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT,
+                                                  MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT,
+                                                  MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT};  
     int32_t old_t = 0;
     while(1){
         int32_t t0 = get_reference_time();
@@ -59,8 +65,10 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
         old_t = t0;        
         ma_frame_rx((int32_t*)&audio_frames[write_buffer_idx], c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
 
-        fixed_gain_apply(&fg[0], &audio_frames[write_buffer_idx].data[0][0]);
-        fixed_gain_apply(&fg[1], &audio_frames[write_buffer_idx].data[8][0]);
+        // Apply gain
+        for(int ch = 0; ch < MIC_ARRAY_CONFIG_MIC_COUNT; ch++){
+            audio_frames[write_buffer_idx].data[ch][0] = scalar_gain(audio_frames[write_buffer_idx].data[ch][0], gains[ch]);
+        }
 
         *read_buffer_ptr = &audio_frames[write_buffer_idx];  // update read buffer for TDM
 
@@ -82,11 +90,8 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
                 uint8_t data_h = s_chan_in_byte(c_i2c_reg);
                 uint8_t data_l = s_chan_in_byte(c_i2c_reg);
 
-                unsigned fg_idx = channel & 0x07; // Mod by 8
-                unsigned fg_block = channel >> 3; // Div by 8
                 int32_t gain = U16_FROM_BYTES(data_h, data_l);
-
-                fixed_gain_set_single_multiplier(&fg[fg_block], gain, fg_idx);
+                gains[channel] = gain;
             }
             break;
 

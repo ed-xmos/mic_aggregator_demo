@@ -91,6 +91,8 @@ For I2C control, make the following connections:
 - SDA IOL <-> Your I2C host SDA
 - GND <-> Your I2C host ground
 
+The I2C slave is tested to 100kHz SCL.
+
 There are 32 registers which control the gain of each of the 16 output channels. The 8b registers contain the 
 upper 8b and lower 8b of the mic gain respectively. The initial gain is set to 1, which is quiet due to the 
 mic_array output being scaled to allow acoustic overload of the mics without clipping. Typically a gain of
