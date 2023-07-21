@@ -49,7 +49,7 @@ void tdm16_master_simple(void) {
     port_set_clock(p_data_in_master, tdm_master_clk);
     port_clear_buffer(p_data_in_master);
     port_set_trigger_time(p_data_in_master, 32 + 1 + offset);
-    set_pad_delay(p_data_in_master, 4); // 2,3,4,5 work. 6 not settable. 1 Does not work. So choose 4 as midpoint
+    set_pad_delay(p_data_in_master, 5); // 4,5 work. 6 not settable. 0..3 Do not work.
 
     clock_start(tdm_master_clk);
 
