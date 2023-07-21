@@ -13,7 +13,7 @@
 #define MIC_ARRAY_CONFIG_PORT_PDM_CLK       XS1_PORT_1A // X0D00, J14 - Pin 2, '00'
 #define MIC_ARRAY_CONFIG_PORT_PDM_DATA      XS1_PORT_8B // X0D14..X0D21 | J14 - Pin 3,5,12,14 and Pin 6,7,10,11
 #define MIC_ARRAY_CONFIG_MIC_COUNT          16
-#define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME  1
+#define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME  1           // Application is currently hard coded to 1
 #define MIC_ARRAY_TILE                      0           // NOTE: Tile 1 might still have issues with channels other than the first.
 #define MIC_ARRAY_NUM_DECIMATOR_TASKS       3           // Defines the number of subtasks to perform the decimation process on.
 #define MIC_ARRAY_PDM_RX_OWN_THREAD         1           // Use dedicated thread for PDM Rx task
@@ -24,7 +24,7 @@
 #define TDM_SLAVEPORT_FSYNCH                XS1_PORT_1B // X1D01, I2S LRCLK
 #define TDM_SLAVEPORT_BCLK                  XS1_PORT_1C // X1D10, I2S BCLK
 #define TDM_SLAVEPORT_CLK_BLK               XS1_CLKBLK_1
-#define TDM_SLAVETX_OFFSET                  1
+#define TDM_SLAVETX_OFFSET                  1           // How many BCLK cycles after FSYNCH rising edge data is driver
 
 #define TDM_SIMPLE_MASTER_FSYNCH            XS1_PORT_1M // X1D36, J10 - pin 2, '36'
 #define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15, '38'
