@@ -100,6 +100,9 @@ void main_tile_1(chanend_t c_cross_tile){
     audio_frame_t *read_buffer = NULL;
     audio_frame_t **read_buffer_ptr = &read_buffer;
 
+    port_t p_app_pll_out = MIC_ARRAY_CONFIG_PORT_MCLK;
+    port_enable(p_app_pll_out);
+    set_pad_drive_strength(p_app_pll_out, DRIVE_12MA);
     device_pll_init();
 
     PAR_JOBS(
