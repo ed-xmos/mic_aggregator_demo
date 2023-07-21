@@ -19,8 +19,6 @@
 #include "tdm_master_simple.h"
 #include "i2c_control.h"
 
-volatile int32_t timing = 0;
-
 DECLARE_JOB(pdm_mic_16, (chanend_t));
 void pdm_mic_16(chanend_t c_mic_array) {
     printf("pdm_mic_16 running: %d threads total\n", MIC_ARRAY_PDM_RX_OWN_THREAD + MIC_ARRAY_NUM_DECIMATOR_TASKS);
@@ -58,11 +56,7 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
                                                   MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT,
                                                   MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT,
                                                   MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT, MIC_GAIN_INIT};  
-    int32_t old_t = 0;
     while(1){
-        int32_t t0 = get_reference_time();
-        timing = t0 - old_t;
-        old_t = t0;        
         ma_frame_rx((int32_t*)&audio_frames[write_buffer_idx], c_mic_array, MIC_ARRAY_CONFIG_MIC_COUNT, MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME);
 
         // Apply gain
@@ -101,6 +95,7 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
             }
             break;
         }
+        // There are currently around 1600 ticks (16us) of slack at the end of this loop
     }
 }
 
