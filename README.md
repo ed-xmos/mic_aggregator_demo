@@ -1,5 +1,8 @@
 # mic_aggregator_demo
-16 PDM mics to TDM 16 demo running on the explorer board
+16 PDM mics to TDM16 demo running on the explorer board. Uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
+Decimator configured to 48kHz PCM output. The 16 channels are loaded into a 16 slot TDM slave running at 24.576MHz bit clock and optionally amplified.
+
+A simple TDM16 master is included as well as a local 24.576MHz clock source so that mic_array and TDM16 slave may be tested standalone through the use of jumper cables.
 
 Obtaining the app files
 -----------------------
@@ -52,7 +55,7 @@ The demo runs on the XCORE-AI Explorer board version 2 (with integrated XTAG deb
 
 An oscilloscope will also be handy in case of debug needed.
 
-==Note you will only be able to inject PDM data to two channels at a time due to a single pair of mics on the HW==
+*Note you will only be able to inject PDM data to two channels at a time due to a single pair of mics on the HW*
 
 
 Jumper Connections
