@@ -36,3 +36,8 @@ typedef struct audio_frame_t{
 
 // Macro to adjust the pad output drive strength
 #define set_pad_drive_strength(port, strength)  {__asm__ __volatile__ ("setc res[%0], %1": : "r" (port) , "r" ((strength << DRIVE_SHIFT) | PAD_CONTROL));}
+
+// Macros to convert between two bytes and U16
+#define LOWER_BYTE_FROM_U16(u16)                ((uint8_t)(u16 & 0xff))
+#define UPPER_BYTE_FROM_U16(u16)                ((uint8_t)(u16 >> 8))
+#define U16_FROM_BYTES(upper_byte, lower_byte)  (((uint16_t)upper_byte << 8) | (uint16_t)lower_byte)

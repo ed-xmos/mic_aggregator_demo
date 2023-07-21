@@ -12,9 +12,8 @@
 #define MIC_ARRAY_CONFIG_PORT_MCLK          XS1_PORT_1D // X0D11, J14 - Pin 15, '11'
 #define MIC_ARRAY_CONFIG_PORT_PDM_CLK       XS1_PORT_1A // X0D00, J14 - Pin 2, '00'
 #define MIC_ARRAY_CONFIG_PORT_PDM_DATA      XS1_PORT_8B // X0D14..X0D21 | J14 - Pin 3,5,12,14 and Pin 6,7,10,11
-#define MIC_ARRAY_CONFIG_MIC_COUNT          16
+#define MIC_ARRAY_CONFIG_MIC_COUNT          16          // Application is currently hard coded to 16
 #define MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME  1           // Application is currently hard coded to 1
-#define MIC_ARRAY_TILE                      0           // NOTE: Tile 1 might still have issues with channels other than the first.
 #define MIC_ARRAY_NUM_DECIMATOR_TASKS       3           // Defines the number of subtasks to perform the decimation process on.
 #define MIC_ARRAY_PDM_RX_OWN_THREAD         1           // Use dedicated thread for PDM Rx task
 #define MIC_ARRAY_CLK1                      XS1_CLKBLK_1
@@ -29,6 +28,14 @@
 #define TDM_SIMPLE_MASTER_FSYNCH            XS1_PORT_1M // X1D36, J10 - pin 2, '36'
 #define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15, '38'
 #define TDM_SIMPLE_MASTER_CLK_BLK           XS1_CLKBLK_2
+
+#define I2C_CONTROL_SLAVE_ADDRESS           0x3c    
+#define I2C_CONTROL_NUM_REGISTERS           (MIC_ARRAY_CONFIG_MIC_COUNT * 2) // Number of 8b registers. Each gain is 16b Little Endian (MSB @ 0, LSB @ 1)
+#define I2C_CONTROL_SLAVE_SCL               XS1_PORT_1N //X0D37, SCL
+#define I2C_CONTROL_SLAVE_SDA               XS1_PORT_1O //X0D38, SDA
+
+#define MIC_GAIN_INIT                       1 // Allowed values 0 to 65535
+
 
 // Configuration checks
 #if MIC_ARRAY_CONFIG_MIC_COUNT > 8 && MIC_ARRAY_NUM_DECIMATOR_TASKS < 2
