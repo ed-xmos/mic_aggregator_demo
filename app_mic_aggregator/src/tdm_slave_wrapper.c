@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "app_main.h"
 #include "tdm_slave_wrapper.h"
 
 I2S_CALLBACK_ATTR
@@ -22,15 +23,8 @@ void tdm_post_port_init(void *ctx)
     printf("tdm_post_port_init\n");
     i2s_tdm_ctx_t *i2s_tdm_ctx = ctx;
 
-    /* Increase drive strength of data port to 8mA from default of 4mA */
-    #define PAD_CONTROL 0x00000006
-    #define DRIVE_2MA   0x0
-    #define DRIVE_4MA   0x1
-    #define DRIVE_8MA   0x2
-    #define DRIVE_12MA  0x3
-    #define DRIVE_SHIFT 20
     for(int i = 0; i < i2s_tdm_ctx->num_out; i++){
-        asm volatile ("setc res[%0], %1" :: "r" (i2s_tdm_ctx->p_dout[i]), "r" ((DRIVE_8MA << DRIVE_SHIFT) | PAD_CONTROL));
+        set_pad_drive_strength(i2s_tdm_ctx->p_dout[i], DRIVE_8MA);
     }
 }
 

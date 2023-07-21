@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "app_config.h"
+#include "app_main.h"
 
 // Global for now to allow the monitor to function
 int32_t rx_data[16] = {0};
@@ -42,9 +43,6 @@ void tdm16_master_simple(void) {
     // Buffered Input ports:
     // Pin inputs to the MSb and then shifts right
     // Copies to the transfer register when fully shifted
-
-    // Macro to adjust pad timing for the round trip delay
-    #define set_pad_delay(port, delay)  {__asm__ __volatile__ ("setc res[%0], %1": : "r" (port) , "r" ((delay << 3) | 0x7007));}
 
     port_enable(p_data_in_master);
     port_start_buffered(p_data_in_master, 32);
