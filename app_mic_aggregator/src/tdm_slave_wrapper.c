@@ -16,6 +16,24 @@ void i2s_init(void *app_data, i2s_config_t *i2s_config)
 
 }
 
+TDM_CALLBACK_ATTR
+void tdm_post_port_init(void *ctx)
+{
+    printf("tdm_post_port_init\n");
+    i2s_tdm_ctx_t *i2s_tdm_ctx = ctx;
+
+    /* Increase drive strength of data port to 8mA from default of 4mA */
+    #define PAD_CONTROL 0x00000006
+    #define DRIVE_2MA   0x0
+    #define DRIVE_4MA   0x1
+    #define DRIVE_8MA   0x2
+    #define DRIVE_12MA  0x3
+    #define DRIVE_SHIFT 20
+    for(int i = 0; i < i2s_tdm_ctx->num_out; i++){
+        asm volatile ("setc res[%0], %1" :: "r" (i2s_tdm_ctx->p_dout[i]), "r" ((DRIVE_8MA << DRIVE_SHIFT) | PAD_CONTROL));
+    }
+}
+
 I2S_CALLBACK_ATTR
 void i2s_send(void *app_data, size_t n, int32_t *send_data)
 {
@@ -65,7 +83,8 @@ void tdm16_slave(audio_frame_t **read_buffer_ptr) {
         p_bclk,
         bclk,
         TDM_SLAVETX_OFFSET,
-        I2S_SLAVE_SAMPLE_ON_BCLK_RISING);
+        I2S_SLAVE_SAMPLE_ON_BCLK_RISING,
+        tdm_post_port_init);
 
     i2s_tdm_slave_tx_16_thread(&ctx);
 }
