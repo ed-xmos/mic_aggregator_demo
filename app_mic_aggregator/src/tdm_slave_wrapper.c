@@ -26,6 +26,10 @@ void tdm_post_port_init(void *ctx)
     for(int i = 0; i < i2s_tdm_ctx->num_out; i++){
         set_pad_drive_strength(i2s_tdm_ctx->p_dout[i], DRIVE_8MA);
     }
+
+    if(i2s_tdm_ctx->fysnch_error == true){
+        printf("fysnch_error seen!!\n");
+    }
 }
 
 I2S_CALLBACK_ATTR

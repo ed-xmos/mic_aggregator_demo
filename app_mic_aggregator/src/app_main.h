@@ -27,15 +27,19 @@ typedef struct audio_frame_t{
 
 
 // Pad control defines
-#define PAD_CONTROL     0x00000006
+#define PAD_CONTROL     0x0006
 #define DRIVE_2MA       0x0
 #define DRIVE_4MA       0x1
 #define DRIVE_8MA       0x2
 #define DRIVE_12MA      0x3
 #define DRIVE_SHIFT     20
+#define ENABLE_SCHMITT  (1 << 23)
 
 // Macro to adjust the pad output drive strength
 #define set_pad_drive_strength(port, strength)  {__asm__ __volatile__ ("setc res[%0], %1": : "r" (port) , "r" ((strength << DRIVE_SHIFT) | PAD_CONTROL));}
+// Macro to enable the schmitt input
+#define set_pad_input_schmitt(port)  {__asm__ __volatile__ ("setc res[%0], %1": : "r" (port) , "r" (ENABLE_SCHMITT | PAD_CONTROL));}
+
 
 // Macros to convert between two bytes and U16
 #define LOWER_BYTE_FROM_U16(u16)                ((uint8_t)(u16 & 0xff))
