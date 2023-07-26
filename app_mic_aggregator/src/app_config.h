@@ -24,6 +24,7 @@
 #define TDM_SLAVEPORT_BCLK                  XS1_PORT_1C // X1D10, I2S BCLK
 #define TDM_SLAVEPORT_CLK_BLK               XS1_CLKBLK_1
 #define TDM_SLAVETX_OFFSET                  1           // How many BCLK cycles after FSYNCH rising edge data is driver
+#define TDM_SLAVESAMPLE_MODE                I2S_SLAVE_SAMPLE_ON_BCLK_RISING
 
 #define TDM_SIMPLE_MASTER_FSYNCH            XS1_PORT_1M // X1D36, J10 - pin 2, '36'
 #define TDM_SIMPLE_MASTER_DATA              XS1_PORT_1O // X1D38, J10 - pin 15, '38'

@@ -81,7 +81,7 @@ void tdm16_slave(audio_frame_t **read_buffer_ptr) {
         p_bclk,
         bclk,
         TDM_SLAVETX_OFFSET,
-        I2S_SLAVE_SAMPLE_ON_BCLK_RISING,
+        TDM_SLAVESAMPLE_MODE,
         tdm_post_port_init);
 
     i2s_tdm_slave_tx_16_thread(&ctx);
