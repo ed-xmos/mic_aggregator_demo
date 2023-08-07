@@ -19,6 +19,8 @@
 #include "tdm_master_simple.h"
 #include "i2c_control.h"
 
+#include "xud.h"
+
 DECLARE_JOB(pdm_mic_16, (chanend_t));
 void pdm_mic_16(chanend_t c_mic_array) {
     printf("pdm_mic_16 running: %d threads total\n", MIC_ARRAY_PDM_RX_OWN_THREAD + MIC_ARRAY_NUM_DECIMATOR_TASKS);
@@ -99,6 +101,49 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
     }
 }
 
+DECLARE_JOB(xua_wrapper, (void));
+void xua_wrapper(void) {
+    printf("xua_wrapper\n");
+
+    /* Endpoint type tables - informs XUD what the transfer types for each Endpoint in use and also
+     * if the endpoint wishes to be informed of USB bus resets */
+    const size_t num_ep_out = 2;
+    XUD_EpType epTypeTableOut[num_ep_out] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO};
+
+    channel_t c_ep_out[num_ep_out];
+    chanend_t chanend_ep_out[num_ep_out];
+    for(int i = 0; i < num_ep_out; i++){
+        c_ep_out[i] = chan_alloc();
+        chanend_ep_out[i] = c_ep_out[i].end_a;
+    }
+ 
+    const size_t num_ep_in = 2;
+    XUD_EpType epTypeTableIn[num_ep_in] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO};
+
+    channel_t c_ep_in[num_ep_in];
+    chanend_t chanend_ep_in[num_ep_in];
+    for(int i = 0; i < num_ep_in; i++){
+        c_ep_in[i] = chan_alloc();
+        chanend_ep_in[i] = c_ep_in[i].end_a;
+    }
+ 
+    /* Channel for communicating SOF notifications from XUD to the Buffering cores */
+    channel_t c_sof = chan_alloc();
+
+    /* Channel for audio data between buffering cores and AudioHub/IO core */
+    channel_t c_aud = chan_alloc();
+    
+    /* Channel for communicating control messages from EP0 to the rest of the device (via the buffering cores) */
+    channel_t c_aud_ctl = chan_alloc();
+
+    XUD_Main(chanend_ep_out, num_ep_out, chanend_ep_in, num_ep_in,
+             c_sof.end_a, epTypeTableOut, epTypeTableIn, 
+             XUD_SPEED_HS, XUD_PWR_SELF);
+
+
+    // XUA_Endpoint0(c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_b, NULL, NULL, NULL, NULL);
+    
+}
 
 // Debug task only
 extern volatile int32_t t_dec_exec;
@@ -145,6 +190,7 @@ void main_tile_1(chanend_t c_cross_tile[2]){
         PJOB(hub, (c_cross_tile[0], c_cross_tile[1], read_buffer_ptr)),
         PJOB(tdm16_slave, (read_buffer_ptr)),
         PJOB(tdm16_master_simple, ()),
+        PJOB(xua_wrapper, ()),
         PJOB(tdm_master_monitor, ()) // Temp monitor for checking reception of TDM frames. Separate task so non-intrusive
     );
 }
