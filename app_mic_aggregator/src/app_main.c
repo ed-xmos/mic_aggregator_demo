@@ -113,6 +113,16 @@ extern void XUA_Endpoint0(  chanend_t c_ep0_out,
 );
 
 
+extern void XUA_Buffer(
+            chanend_t c_aud_out,
+            chanend_t c_aud_in,
+            chanend_t c_aud_fb,
+            chanend_t c_sof,
+            chanend_t c_aud_ctl,
+            port_t p_off_mclk,
+            chanend_t c_aud
+);
+
 DECLARE_JOB(xua_wrapper, (void));
 void xua_wrapper(void) {
     printf("xua_wrapper\n");
@@ -129,8 +139,8 @@ void xua_wrapper(void) {
         chanend_ep_out[i] = c_ep_out[i].end_a;
     }
  
-    const size_t num_ep_in = 2;
-    XUD_EpType epTypeTableIn[num_ep_in] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO};
+    const size_t num_ep_in = 3;
+    XUD_EpType epTypeTableIn[num_ep_in] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO, XUD_EPTYPE_ISO};
 
     channel_t c_ep_in[num_ep_in];
     chanend_t chanend_ep_in[num_ep_in];
@@ -153,7 +163,17 @@ void xua_wrapper(void) {
              XUD_SPEED_HS, XUD_PWR_SELF);
 
 
-    XUA_Endpoint0(c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_b, 0, 0, 0, 0);
+    XUA_Endpoint0(c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_a, 0, 0, 0, 0);
+
+    port_t p_for_mclk_count = XS1_PORT_32A;
+    port_enable(p_for_mclk_count);
+    /* Connect master-clock clock-block to clock-block pin */
+    // set_clock_src(clk_audio_mclk_usb, p_mclk_in_usb);           /* Clock clock-block from mclk pin */
+    // set_port_clock(p_for_mclk_count, clk_audio_mclk_usb);       /* Clock the "count" port from the clock block */
+    // start_clock(clk_audio_mclk_usb);                            /* Set the clock off running */
+
+    XUA_Buffer(c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud.end_a);
+
     
 }
 
