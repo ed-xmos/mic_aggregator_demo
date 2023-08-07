@@ -20,6 +20,8 @@
 #include "i2c_control.h"
 
 #include "xud.h"
+#include "xua.h"
+
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
 void pdm_mic_16(chanend_t c_mic_array) {
@@ -101,6 +103,16 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
     }
 }
 
+extern void XUA_Endpoint0(  chanend_t c_ep0_out,
+                            chanend_t c_ep0_in,
+                            chanend_t c_audioCtrl,
+                            unsigned int c_mix_ctl,
+                            unsigned int c_clk_ctl,
+                            unsigned int c_EANativeTransport_ctrl,
+                            unsigned int dfuInterface
+);
+
+
 DECLARE_JOB(xua_wrapper, (void));
 void xua_wrapper(void) {
     printf("xua_wrapper\n");
@@ -141,7 +153,7 @@ void xua_wrapper(void) {
              XUD_SPEED_HS, XUD_PWR_SELF);
 
 
-    // XUA_Endpoint0(c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_b, NULL, NULL, NULL, NULL);
+    XUA_Endpoint0(c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_b, 0, 0, 0, 0);
     
 }
 

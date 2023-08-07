@@ -19,6 +19,10 @@ file(GLOB_RECURSE XUA_SOURCES       ${XUA_SRC_PATH}/src/core/buffer/*.xc
                                     ${XUA_SRC_PATH}/src/core/buffer/*.c
                                     ${XUA_SRC_PATH}/src/core/endpoint0/*.xc
                                     ${XUA_SRC_PATH}/src/core/endpoint0/*.c
+                                    ${XUA_SRC_PATH}/src/core/user/*.c
+                                    ${XUA_SRC_PATH}/src/core/support/*.xc
+                                    ${XUA_SRC_PATH}/src/dfu/*.c
+                                    ${XUA_SRC_PATH}/src/dfu/*.xc
 )
 
 message(STATUS XUA_SOURCES ${XUA_SOURCES})
@@ -43,7 +47,6 @@ set(APP_COMPILER_FLAGS
     -report
     -fxscope
     -mcmodel=large
-    # -Werror
     -Wall
     -Wno-xcore-fptrgroup
     ${PLATFORM_FILE}
@@ -61,10 +64,14 @@ message(STATUS APP_INCLUDES ${APP_INCLUDES})
 set(APP_COMPILE_DEFINITIONS
     DEBUG_PRINT_ENABLE=1
     __xua_conf_h_exists__=1
+    DXUD_SERIES_SUPPORT=4
+    QUAD_SPI_FLASH=1
+    DUSB_TILE=tile[1]
 )
 
 set(APP_LINK_OPTIONS
     -report
+    -lquadflash
     ${PLATFORM_FILE}
     ${CMAKE_CURRENT_LIST_DIR}/src/config.xscope
 )
