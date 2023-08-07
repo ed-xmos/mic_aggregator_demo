@@ -66,7 +66,8 @@ set(APP_COMPILE_DEFINITIONS
     __xua_conf_h_exists__=1
     DXUD_SERIES_SUPPORT=4
     QUAD_SPI_FLASH=1
-    DUSB_TILE=tile[1]
+    USB_TILE=tile[1]
+    DXUD_CORE_CLOCK=600
 )
 
 set(APP_LINK_OPTIONS
