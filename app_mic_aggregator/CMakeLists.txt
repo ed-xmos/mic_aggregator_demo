@@ -13,6 +13,21 @@ file(GLOB APP_SOURCES               ${APP_SRC_PATH}/*.c
                                     ${MIC_ARRAY_DEMO_UTILS_PATH}/device_pll_ctrl.c
 )
 
+set(XUA_SRC_PATH ${CMAKE_CURRENT_LIST_DIR}/../lib_xua/lib_xua)
+
+file(GLOB_RECURSE XUA_SOURCES       ${XUA_SRC_PATH}/src/core/buffer/*.xc
+                                    ${XUA_SRC_PATH}/src/core/buffer/*.c
+)
+
+message(STATUS XUA_SOURCES ${XUA_SOURCES})
+
+set(XUA_INCLUDES                    ${XUA_SRC_PATH}/api
+                                    ${XUA_SRC_PATH}/src/dfu
+                                    ${XUA_SRC_PATH}/src/core
+                                    ${XUA_SRC_PATH}/src/core/audiohub
+                                    ${XUA_SRC_PATH}/src/core/endpoint0
+                                    ${XUA_SRC_PATH}/src/core/support
+)
 
 #**********************
 # Flags
@@ -33,10 +48,14 @@ set( APP_INCLUDES
     ${APP_SRC_PATH}
     ${MIC_ARRAY_DEMO_UTILS_PATH}
     ${MIC_ARRAY_PAR_DECIMATOR_PATH}
+    ${XUA_INCLUDES}
 )
+message(STATUS APP_INCLUDES ${APP_INCLUDES})
+
 
 set(APP_COMPILE_DEFINITIONS
     DEBUG_PRINT_ENABLE=1
+    __xua_conf_h_exists__=1
 )
 
 set(APP_LINK_OPTIONS
@@ -49,6 +68,7 @@ set(APP_COMMON_LINK_LIBRARIES
     lib_i2s
     lib_i2c
     lib_mic_array
+    lib_xud
 )
 
 
@@ -58,7 +78,7 @@ set(APP_COMMON_LINK_LIBRARIES
 #*************************
 set(TARGET_NAME mic_aggregator)
 add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
-target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES})
+target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${XUA_SOURCES})
 
 target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
 target_compile_definitions(${TARGET_NAME} PUBLIC ${APP_COMPILE_DEFINITIONS})
