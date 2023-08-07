@@ -4,5 +4,9 @@
 #include <xcore/channel.h>
 #include <xcore/parallel.h>
 
-DECLARE_JOB(xua_wrapper, (void));
-void xua_wrapper(void);
+#include "xua_conf.h"
+
+DECLARE_JOB(xua_wrapper, (chanend_t));
+void xua_wrapper(chanend_t c_aud);
+
+void xua_exchange(chanend_t c_aud, int32_t samples[NUM_USB_CHAN_IN]);

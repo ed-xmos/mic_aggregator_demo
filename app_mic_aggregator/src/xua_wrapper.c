@@ -11,6 +11,7 @@
 
 #include "xud.h"
 #include "xua.h"
+#include "xua_commands.h"
 
 extern void XUA_Endpoint0(  chanend_t c_ep0_out,
                             chanend_t c_ep0_in,
@@ -45,7 +46,7 @@ channel_t c_ep_in[num_ep_in];
 chanend_t chanend_ep_in[num_ep_in];
 
 channel_t c_sof;
-channel_t c_aud;
+chanend_t c_aud_g;
 channel_t c_aud_ctl;
 
 port_t p_for_mclk_count;
@@ -67,11 +68,11 @@ void ep0_wrapper(void){
 
 DECLARE_JOB(buffer_wrapper, (void));
 void buffer_wrapper(void){
-    XUA_Buffer(c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud.end_a);
+    XUA_Buffer(c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud_g);
 }
 
 
-void xua_wrapper(void) {
+void xua_wrapper(chanend_t c_aud) {
     printf("xua_wrapper\n");
 
     for(int i = 0; i < num_ep_out; i++){
@@ -85,20 +86,45 @@ void xua_wrapper(void) {
     }
  
     c_sof = chan_alloc();
-    c_aud = chan_alloc();
     c_aud_ctl = chan_alloc();
+    c_aud_g = c_aud;
 
 
     p_for_mclk_count = PORT_MCLK_COUNT;
     port_enable(p_for_mclk_count);
+
     /* Connect master-clock clock-block to clock-block pin */
-    // set_clock_src(clk_audio_mclk_usb, p_mclk_in_usb);           /* Clock clock-block from mclk pin */
-    // set_port_clock(p_for_mclk_count, clk_audio_mclk_usb);       /* Clock the "count" port from the clock block */
-    // start_clock(clk_audio_mclk_usb);                            /* Set the clock off running */
+    port_set_clock(p_for_mclk_count, TDM_SLAVEPORT_CLK_BLK);
 
     PAR_JOBS(
         PJOB(xud_wrapper, ()),
         PJOB(ep0_wrapper, ()),
         PJOB(buffer_wrapper, ())
     );
+}
+
+void xua_exchange(chanend_t c_aud, int32_t samples[NUM_USB_CHAN_IN]){
+    chanend_out_word(c_aud, 0);
+    int isct = chanend_test_control_token_next_byte(c_aud);
+    if(isct){
+        char ct = chanend_in_control_token(c_aud);
+        printf("ct: %d\n", ct);
+        if(ct == SET_SAMPLE_FREQ)
+        {
+            chanend_in_word(c_aud);
+        }
+        return;
+    }
+
+    const unsigned loops = (NUM_USB_CHAN_OUT > 0) ? NUM_USB_CHAN_OUT : 1; 
+    for(int i = 0; i < loops; i++)
+    {
+        chanend_in_word(c_aud);
+    }
+
+    for(int i = 0; i < NUM_USB_CHAN_IN; i++)
+    {
+        chanend_out_word(c_aud, samples[i]);
+        // chanend_out_word(c_aud, 0x20000000);
+    }
 }

@@ -20,6 +20,7 @@
 #include "i2c_control.h"
 
 #include "xua_wrapper.h"
+#include "xua_conf.h"
 
 
 DECLARE_JOB(pdm_mic_16, (chanend_t));
@@ -48,8 +49,8 @@ static inline int32_t scalar_gain(int32_t samp, int32_t gain){
 }
 
 
-DECLARE_JOB(hub, (chanend_t, chanend_t, audio_frame_t **));
-void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer_ptr) {
+DECLARE_JOB(hub, (chanend_t, chanend_t, chanend_t, audio_frame_t **));
+void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, chanend_t c_aud, audio_frame_t **read_buffer_ptr) {
     printf("hub\n");
 
     unsigned write_buffer_idx = 0;
@@ -66,6 +67,8 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, audio_frame_t **read_buffer
         for(int ch = 0; ch < MIC_ARRAY_CONFIG_MIC_COUNT; ch++){
             audio_frames[write_buffer_idx].data[ch][0] = scalar_gain(audio_frames[write_buffer_idx].data[ch][0], gains[ch]);
         }
+
+        xua_exchange(c_aud, &audio_frames[write_buffer_idx].data[0][0]);
 
         *read_buffer_ptr = &audio_frames[write_buffer_idx];  // update read buffer for TDM
 
@@ -144,11 +147,13 @@ void main_tile_1(chanend_t c_cross_tile[2]){
     set_pad_drive_strength(p_app_pll_out, DRIVE_12MA);
     device_pll_init();
 
+    channel_t c_aud = chan_alloc();
+
     PAR_JOBS(
-        PJOB(hub, (c_cross_tile[0], c_cross_tile[1], read_buffer_ptr)),
+        PJOB(hub, (c_cross_tile[0], c_cross_tile[1], c_aud.end_b, read_buffer_ptr)),
         PJOB(tdm16_slave, (read_buffer_ptr)),
         PJOB(tdm16_master_simple, ()),
-        PJOB(xua_wrapper, ()),
+        PJOB(xua_wrapper, (c_aud.end_a)),
         PJOB(tdm_master_monitor, ()) // Temp monitor for checking reception of TDM frames. Separate task so non-intrusive
     );
 }
