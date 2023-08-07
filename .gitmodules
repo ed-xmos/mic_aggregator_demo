@@ -4,3 +4,6 @@
 [submodule "lib_xcore_math"]
 	path = lib_xcore_math
 	url = git@github.com:xmos/lib_xcore_math.git
+[submodule "lib_xua"]
+	path = lib_xua
+	url = git@github.com:xmos/lib_xua.git
