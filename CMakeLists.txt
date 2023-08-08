@@ -18,5 +18,5 @@ if(PROJECT_IS_TOP_LEVEL)
 endif()
 
 add_subdirectory(fwk_io)
-add_subdirectory(lib_xcore_math)
+add_subdirectory(fwk_core)
 
