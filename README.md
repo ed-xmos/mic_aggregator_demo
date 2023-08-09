@@ -38,6 +38,18 @@ Following inital cmake build, as long as you don't add new source files, you may
 
 If you add new source files you will need to run the `cmake` step again.
 
+Known Issues
+------------
+
+If using USB, there is currently a bug where an allocated timer is NULL causing an ET_ILLEGAL_RESOURCE at runtime. To work around this
+it is currently necessary to replace line 141 of `xud_device.xc` in `/fwk_io/modules/xud/lib_xud/lib_xud/src/user/control/`:
+
+     t when timerafter(time+50000) :> void;
+
+with this line:
+
+    unsigned t_now = time; do{t :> t_now;}while timeafter(t_now, time+50000); 
+
 Running the app
 ---------------
 
