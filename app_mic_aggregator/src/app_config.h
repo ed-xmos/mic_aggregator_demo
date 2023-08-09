@@ -1,10 +1,9 @@
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
+// This file contains general app configuration. For USB config, please see xua_conf.h
+
 #pragma once
-
-#define ENABLE_BURN_MIPS                    0           // Specifies whether to include burn() tasks on remaining cores for testing purposes.
-
 
 #define MIC_ARRAY_CONFIG_MCLK_FREQ          24576000
 #define MIC_ARRAY_CONFIG_PDM_FREQ           3072000

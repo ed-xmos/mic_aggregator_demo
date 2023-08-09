@@ -131,7 +131,9 @@ void main_tile_0(chanend_t c_cross_tile[2]){
     PAR_JOBS(
         PJOB(pdm_mic_16, (c_cross_tile[0])), // Note spawns MIC_ARRAY_NUM_DECIMATOR_TASKS threads
         PJOB(pdm_mic_16_front_end, ()),
+#if CONFIG_TDM
         PJOB(i2c_control, (c_cross_tile[1])),
+#endif
         PJOB(monitor_tile0, ())
     );
 }
@@ -141,7 +143,7 @@ void main_tile_1(chanend_t c_cross_tile[2]){
     audio_frame_t *read_buffer = NULL;
     audio_frame_t **read_buffer_ptr = &read_buffer;
 
-    // Enable and setup the 24.576MHz APP PLL which is used as BCLK and prescaled as PDM clock
+    // Enable and setup the 24.576MHz APP PLL which is used as BCLK for TDM or MCLK for USB and prescaled as PDM clock for both
     port_t p_app_pll_out = MIC_ARRAY_CONFIG_PORT_MCLK;
     port_enable(p_app_pll_out);
     set_pad_drive_strength(p_app_pll_out, DRIVE_12MA);
@@ -151,9 +153,12 @@ void main_tile_1(chanend_t c_cross_tile[2]){
 
     PAR_JOBS(
         PJOB(hub, (c_cross_tile[0], c_cross_tile[1], c_aud.end_b, read_buffer_ptr)),
+#if CONFIG_TDM
         PJOB(tdm16_slave, (read_buffer_ptr)),
         PJOB(tdm16_master_simple, ()),
-        PJOB(xua_wrapper, (c_aud.end_a)),
         PJOB(tdm_master_monitor, ()) // Temp monitor for checking reception of TDM frames. Separate task so non-intrusive
+#else
+        PJOB(xua_wrapper, (c_aud.end_a))
+#endif
     );
 }

@@ -77,19 +77,21 @@ set(APP_COMMON_LINK_LIBRARIES
 
 
 #*************************
-# Create Target - Note just single tile as no RTOS
+# Create Targets
 #*************************
-set(TARGET_NAME mic_aggregator)
-add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
-target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${XUA_SOURCES})
+foreach(CONFIG tdm usb)
+    set(TARGET_NAME mic_aggregator_${CONFIG})
+    add_executable(${TARGET_NAME} EXCLUDE_FROM_ALL )
+    target_sources(${TARGET_NAME} PUBLIC ${APP_SOURCES} ${XUA_SOURCES})
+    target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
+    string(TOUPPER ${CONFIG} CONFIG_UPPER)
+    target_compile_definitions(${TARGET_NAME} PUBLIC ${APP_COMPILE_DEFINITIONS} CONFIG_${CONFIG_UPPER}=1)
+    target_compile_options(${TARGET_NAME} PRIVATE ${APP_COMPILER_FLAGS})
+    target_link_libraries(${TARGET_NAME} PUBLIC ${APP_COMMON_LINK_LIBRARIES})
+    target_link_options(${TARGET_NAME} PRIVATE ${APP_LINK_OPTIONS})
+    unset(TARGET_NAME)
 
-target_include_directories(${TARGET_NAME} PUBLIC ${APP_INCLUDES})
-target_compile_definitions(${TARGET_NAME} PUBLIC ${APP_COMPILE_DEFINITIONS})
-target_compile_options(${TARGET_NAME} PRIVATE ${APP_COMPILER_FLAGS})
-target_link_libraries(${TARGET_NAME} PUBLIC ${APP_COMMON_LINK_LIBRARIES})
-target_link_options(${TARGET_NAME} PRIVATE ${APP_LINK_OPTIONS})
-unset(TARGET_NAME)
-
-
-# Copy output to a handy location
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.xe DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    # Copy output to a handy location
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.xe DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    unset(TARGET_NAME)
+endforeach()

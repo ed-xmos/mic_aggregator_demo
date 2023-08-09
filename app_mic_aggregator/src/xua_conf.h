@@ -1,6 +1,8 @@
 // Copyright 2023 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 
+// This file contains defines relating to the USB build only
+
 #ifndef _XUA_CONF_H_ 
 #define _XUA_CONF_H_
 
