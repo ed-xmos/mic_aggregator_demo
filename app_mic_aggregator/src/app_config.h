@@ -54,3 +54,6 @@
 #if MIC_ARRAY_CONFIG_USE_DDR != 1
 #error "MIC_ARRAY_CONFIG_USE_DDR: This application only supports DDR"
 #endif
+
+#define NUM_DECIMATOR_SUBTASKS MIC_ARRAY_NUM_DECIMATOR_TASKS
+
