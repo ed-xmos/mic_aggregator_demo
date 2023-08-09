@@ -67,9 +67,10 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, chanend_t c_aud, audio_fram
         for(int ch = 0; ch < MIC_ARRAY_CONFIG_MIC_COUNT; ch++){
             audio_frames[write_buffer_idx].data[ch][0] = scalar_gain(audio_frames[write_buffer_idx].data[ch][0], gains[ch]);
         }
-
+        printintln(audio_frames[write_buffer_idx].data[0][0]);
+#if CONFIG_USB
         xua_exchange(c_aud, &audio_frames[write_buffer_idx].data[0][0]);
-
+#endif
         *read_buffer_ptr = &audio_frames[write_buffer_idx];  // update read buffer for TDM
 
         write_buffer_idx++;
@@ -101,7 +102,7 @@ void hub(chanend_t c_mic_array, chanend_t c_i2c_reg, chanend_t c_aud, audio_fram
             }
             break;
         }
-        // There are currently around 1600 ticks (16us) of slack at the end of this loop
+        // There are currently around 1600 ticks (16us) of slack at the end of this loop in TDM mode
     }
 }
 

@@ -1,8 +1,8 @@
 # mic_aggregator_demo
-16 PDM mics to TDM16 demo running on the explorer board. Uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
-Decimator configured to 48kHz PCM output. The 16 channels are loaded into a 16 slot TDM slave running at 24.576MHz bit clock and optionally amplified.
+16 PDM mics to either TDM16 or USB Audio demo running on the explorer board. Uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
+The decimator is configured to 48kHz PCM output. The 16 channels are loaded wither into a 16 slot TDM slave running at 24.576MHz bit clock or a USB Audio Class 2 adaptive interface and optionally amplified.
 
-A simple TDM16 master is included as well as a local 24.576MHz clock source so that mic_array and TDM16 slave may be tested standalone through the use of jumper cables.
+For the TDM builds, a simple TDM16 master is included as well as a local 24.576MHz clock source so that mic_array and TDM16 slave may be tested standalone through the use of jumper cables.
 
 Obtaining the app files
 -----------------------
@@ -28,11 +28,13 @@ To build for the first time you will need to run cmake to create the make files:
     $ mkdir build
     $ cd build
     $ cmake --toolchain ../fwk_io/xmos_cmake_toolchain/xs3a.cmake  ..
-    $ make mic_aggregator -j
+    $ make mic_aggregator_tdm -j
+    $ make mic_aggregator_usb -j
 
 Following inital cmake build, as long as you don't add new source files, you may just type:
 
-    $ make mic_aggregator -j
+    $ make mic_aggregator_tdm -j
+    $ make mic_aggregator_usb -j
 
 If you add new source files you will need to run the `cmake` step again.
 
@@ -41,7 +43,10 @@ Running the app
 
 Connect the explorer board to the host and type:
 
-    $ xrun app_mic_aggregator/mic_aggregator.xe 
+    $ xrun app_mic_aggregator/mic_aggregator_tdm.xe 
+    $ xrun app_mic_aggregator/mic_aggregator_usb.xe 
+
+Optionally, you may use xrun `--xscope` to provide debug output.
 
 Required Hardware
 -----------------

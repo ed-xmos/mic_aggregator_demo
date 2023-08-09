@@ -11,7 +11,7 @@
 #define I2S_CHANS_DAC 0
 #define I2S_CHANS_ADC 0
 #define MCLK_441 (512 * 44100)
-#define MCLK_48 (512 * 48000)
+#define MCLK_48 (512 * 48000)   // 24.576MHz
 #define MIN_FREQ 48000
 #define MAX_FREQ 48000
 
