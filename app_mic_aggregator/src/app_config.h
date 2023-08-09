@@ -36,6 +36,9 @@
 
 #define MIC_GAIN_INIT                       1 // Allowed values 0 to 65535
 
+#define USB_MCLK_COUNT_CLK_BLK              XS1_CLKBLK_3
+#define USB_MCLK_IN                         XS1_PORT_1D // X1D11, I2S MCLK
+
 
 // Configuration checks
 #if MIC_ARRAY_CONFIG_MIC_COUNT > 8 && MIC_ARRAY_NUM_DECIMATOR_TASKS < 2

@@ -89,12 +89,18 @@ void xua_wrapper(chanend_t c_aud) {
     c_aud_ctl = chan_alloc();
     c_aud_g = c_aud;
 
-
+    /* Declare and enable internal MCLK counting port */
     p_for_mclk_count = PORT_MCLK_COUNT;
     port_enable(p_for_mclk_count);
 
-    /* Connect master-clock clock-block to clock-block pin */
-    port_set_clock(p_for_mclk_count, TDM_SLAVEPORT_CLK_BLK);
+    /* Connect mclk_count clock-block to mclk_in pin */
+    port_t p_for_mclk_in = USB_MCLK_IN;
+    port_enable(p_for_mclk_in);
+    xclock_t usb_mclk_in_clk = USB_MCLK_COUNT_CLK_BLK;
+    clock_enable(usb_mclk_in_clk);
+    clock_set_source_port(usb_mclk_in_clk, p_for_mclk_in);
+    port_set_clock(p_for_mclk_count, usb_mclk_in_clk);
+    clock_start(usb_mclk_in_clk);
 
     PAR_JOBS(
         PJOB(xud_wrapper, ()),
