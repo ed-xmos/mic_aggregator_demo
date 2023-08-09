@@ -3,14 +3,25 @@
 #**********************
 
 set(APP_SRC_PATH ${CMAKE_CURRENT_LIST_DIR}/src)
-set(MIC_ARRAY_DEMO_UTILS_PATH ../fwk_io/modules/mic_array/demos/common/src/)
+set(MIC_ARRAY_DEMO_PATH ../fwk_io/modules/mic_array/demos/)
 set(PLATFORM_FILE ${APP_SRC_PATH}/XCORE-AI-EXPLORER.xn)
+
+
+#We make a copy of the par decimator files to avoid include clashes from the demo
+set(DEMO_PAR_DECIMATOR_FILES        ${MIC_ARRAY_DEMO_PATH}/demo_par_decimator/src/decimator_subtask.c
+                                    ${MIC_ARRAY_DEMO_PATH}/demo_par_decimator/src/decimator_subtask.h
+                                    ${MIC_ARRAY_DEMO_PATH}/demo_par_decimator/src/app_decimator.hpp
+                                    ${MIC_ARRAY_DEMO_PATH}/demo_par_decimator/src/app_mic_array.hpp
+)
+
+file(COPY ${DEMO_PAR_DECIMATOR_FILES} DESTINATION ${APP_SRC_PATH}/par_decimator)
 
 file(GLOB APP_SOURCES               ${APP_SRC_PATH}/*.c
                                     ${APP_SRC_PATH}/*.xc
                                     ${APP_SRC_PATH}/*.cpp
+                                    ${APP_SRC_PATH}/par_decimator/*.c
                                     ${APP_SRC_PATH}/config.xscope
-                                    ${MIC_ARRAY_DEMO_UTILS_PATH}/device_pll_ctrl.c
+                                    ${MIC_ARRAY_DEMO_PATH}/common/src/device_pll_ctrl.c
 )
 
 # Add files for USB build config
@@ -34,9 +45,9 @@ set(APP_COMPILER_FLAGS
 
 set( APP_INCLUDES
     ${APP_SRC_PATH}
-    ${MIC_ARRAY_DEMO_UTILS_PATH}
-    ${MIC_ARRAY_PAR_DECIMATOR_PATH}
     ${XUA_INCLUDES}
+    ${APP_SRC_PATH}/par_decimator
+    ${MIC_ARRAY_DEMO_PATH}/common/src
 )
 message(STATUS APP_INCLUDES ${APP_INCLUDES})
 
@@ -63,7 +74,6 @@ set(APP_COMMON_LINK_LIBRARIES
     lib_mic_array
     lib_xud
 )
-
 
 
 #*************************

@@ -73,7 +73,7 @@ constexpr const right_shift_t* stage_2_shift() {
 }
 
 using TMicArray = mic_array::MicArray<mic_count,
-                          my_mic_array::MyTwoStageDecimator<mic_count, 
+                          par_mic_array::MyTwoStageDecimator<mic_count, 
                                                        decimation_factor, 
                                                        stage_2_tap_count>,
                           mic_array::StandardPdmRxService<mic_count,
