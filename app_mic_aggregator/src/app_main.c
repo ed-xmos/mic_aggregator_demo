@@ -37,7 +37,9 @@ DECLARE_JOB(pdm_mic_16_front_end, (void));
 void pdm_mic_16_front_end(void) {
     printf("pdm_mic_16_front_end\n");
 
-    app_pdm_rx_task();
+    if(MIC_ARRAY_PDM_RX_OWN_THREAD){
+        app_pdm_rx_task();
+    }
 }
 
 static inline int32_t scalar_gain(int32_t samp, int32_t gain){

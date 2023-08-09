@@ -34,7 +34,7 @@
 #define I2C_CONTROL_SLAVE_SCL               XS1_PORT_1N //X0D37, SCL
 #define I2C_CONTROL_SLAVE_SDA               XS1_PORT_1O //X0D38, SDA
 
-#define MIC_GAIN_INIT                       1 // Allowed values 0 to 65535
+#define MIC_GAIN_INIT                       100         // Allowed values 0 to 65535
 
 #define USB_MCLK_COUNT_CLK_BLK              XS1_CLKBLK_3
 #define USB_MCLK_IN                         XS1_PORT_1D // X1D11, I2S MCLK

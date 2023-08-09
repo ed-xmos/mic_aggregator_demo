@@ -111,7 +111,7 @@ For I2C control, make the following connections:
 The I2C slave is tested to 100kHz SCL.
 
 There are 32 registers which control the gain of each of the 16 output channels. The 8b registers contain the 
-upper 8b and lower 8b of the mic gain respectively. The initial gain is set to 1, which is quiet due to the 
+upper 8b and lower 8b of the mic gain respectively. The initial gain is set to 100, since 1 is quiet due to the 
 mic_array output being scaled to allow acoustic overload of the mics without clipping. Typically a gain of
 a few hundred works for normal conditions. The gain is only applied after the lower byte is written.
 
@@ -155,8 +155,8 @@ The gain applied is saturating so no overflow will occur, only clipping.
 
 If using a raspberry Pi as the I2C host you may use the following commands:
 
-    $ i2cset -y 1 0x3c 0 0 #Set the gain on mic channel 0 to 100
-    $ i2cset -y 1 0x3c 1 100 #Set the gain on mic channel 0 to 100
+    $ i2cset -y 1 0x3c 0 0 #Set the gain on mic channel 0 to 50
+    $ i2cset -y 1 0x3c 1 50 #Set the gain on mic channel 0 to 50
 
     $ i2cget -y 1 0x3c 0 #Get the upper byte of gain on mic channel 0
     $ i2cget -y 1 0x3c 1 #Get the lower byte of gain on mic channel 0

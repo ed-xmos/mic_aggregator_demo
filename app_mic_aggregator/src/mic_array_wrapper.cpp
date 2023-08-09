@@ -98,12 +98,6 @@ void app_mic_array_init()
   mics.Decimator.Init(stage_1_filter(), stage_2_filter(), *stage_2_shift());
   mics.PdmRx.Init(pdm_res.p_pdm_mics);
 
-
-  if(!MIC_ARRAY_PDM_RX_OWN_THREAD)
-  {
-    mic_array_pdm_clock_start(&pdm_res);
-  }
-  
   printf("MIC CONFIG:\n");
   printf("- MIC_ARRAY_TILE: " XSTR(MIC_ARRAY_TILE) "\n");
   printf("- MIC_ARRAY_CONFIG_CLOCK_BLOCK_A: " XSTR(MIC_ARRAY_CONFIG_CLOCK_BLOCK_A) "\n");
@@ -119,6 +113,11 @@ void app_mic_array_init()
   printf("- MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME: " XSTR(MIC_ARRAY_CONFIG_SAMPLES_PER_FRAME) "\n");
   printf("- MIC_ARRAY_NUM_DECIMATOR_TASKS: " XSTR(MIC_ARRAY_NUM_DECIMATOR_TASKS) "\n");
   printf("- MIC_ARRAY_PDM_RX_OWN_THREAD: " XSTR(MIC_ARRAY_PDM_RX_OWN_THREAD) "\n");
+  
+  if(!MIC_ARRAY_PDM_RX_OWN_THREAD)
+  {
+    mic_array_pdm_clock_start(&pdm_res);
+  }
 }
 
 MA_C_API
