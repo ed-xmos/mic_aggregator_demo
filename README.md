@@ -1,5 +1,5 @@
 # mic_aggregator_demo
-16 PDM mics to either TDM16 or USB Audio demo running on the explorer board. Uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
+16 PDM mics to either TDM16 slave or USB Audio demo running on the explorer board. Uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
 The decimator is configured to 48kHz PCM output. The 16 channels are loaded wither into a 16 slot TDM slave running at 24.576MHz bit clock or a USB Audio Class 2 adaptive interface and optionally amplified.
 
 For the TDM builds, a simple TDM16 master is included as well as a local 24.576MHz clock source so that mic_array and TDM16 slave may be tested standalone through the use of jumper cables.
