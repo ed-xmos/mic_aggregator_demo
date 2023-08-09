@@ -45,30 +45,24 @@ XUD_EpType epTypeTableIn[num_ep_in] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_E
 channel_t c_ep_in[num_ep_in];
 chanend_t chanend_ep_in[num_ep_in];
 
-channel_t c_sof;
-chanend_t c_aud_g;
-channel_t c_aud_ctl;
 
-port_t p_for_mclk_count;
-
-
-DECLARE_JOB(xud_wrapper, (void));
-void xud_wrapper(void){
+DECLARE_JOB(xud_wrapper, (chanend_t));
+void xud_wrapper(chanend_t c_sof){
     hwtimer_realloc_xc_timer();
     XUD_Main(chanend_ep_out, num_ep_out, chanend_ep_in, num_ep_in,
-             c_sof.end_a, epTypeTableOut, epTypeTableIn, 
+             c_sof, epTypeTableOut, epTypeTableIn, 
              XUD_SPEED_HS, XUD_PWR_SELF);
     hwtimer_free_xc_timer();
 }
 
-DECLARE_JOB(ep0_wrapper, (void));
-void ep0_wrapper(void){
-    XUA_Endpoint0(c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_a, 0, 0, 0, 0);
+DECLARE_JOB(ep0_wrapper, (chanend_t, chanend_t, chanend_t));
+void ep0_wrapper(chanend_t c_ep0_out, chanend_t c_ep0_in, chanend_t c_aud_ctl){
+    XUA_Endpoint0(c_ep0_out, c_ep0_in, c_aud_ctl, 0, 0, 0, 0);
 }
 
-DECLARE_JOB(buffer_wrapper, (void));
-void buffer_wrapper(void){
-    XUA_Buffer(c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud_g);
+DECLARE_JOB(buffer_wrapper, (chanend_t, chanend_t, port_t, chanend_t));
+void buffer_wrapper(chanend_t c_sof, chanend_t c_aud_ctl, port_t p_for_mclk_count, chanend_t c_aud){
+    XUA_Buffer(c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof, c_aud_ctl, p_for_mclk_count, c_aud);
 }
 
 
@@ -85,15 +79,14 @@ void xua_wrapper(chanend_t c_aud) {
         chanend_ep_in[i] = c_ep_in[i].end_a;
     }
  
-    c_sof = chan_alloc();
-    c_aud_ctl = chan_alloc();
-    c_aud_g = c_aud;
+    channel_t c_sof = chan_alloc();
+    channel_t c_aud_ctl = chan_alloc();
 
     /* Declare and enable internal MCLK counting port */
-    p_for_mclk_count = PORT_MCLK_COUNT;
+    port_t p_for_mclk_count = PORT_MCLK_COUNT;
     port_enable(p_for_mclk_count);
 
-    /* Connect mclk_count clock-block to mclk_in pin */
+    /* Connect mclk_count via clock-block to mclk_in pin */
     port_t p_for_mclk_in = USB_MCLK_IN;
     port_enable(p_for_mclk_in);
     xclock_t usb_mclk_in_clk = USB_MCLK_COUNT_CLK_BLK;
@@ -103,9 +96,9 @@ void xua_wrapper(chanend_t c_aud) {
     clock_start(usb_mclk_in_clk);
 
     PAR_JOBS(
-        PJOB(xud_wrapper, ()),
-        PJOB(ep0_wrapper, ()),
-        PJOB(buffer_wrapper, ())
+        PJOB(xud_wrapper, (c_sof.end_a)),
+        PJOB(ep0_wrapper, (c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_a)),
+        PJOB(buffer_wrapper, (c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud))
     );
 }
 
