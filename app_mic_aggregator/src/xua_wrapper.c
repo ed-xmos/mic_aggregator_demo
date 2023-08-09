@@ -13,6 +13,7 @@
 #include "xua.h"
 #include "xua_commands.h"
 
+// C compatible prototypes for XUA tasks
 extern void XUA_Endpoint0(  chanend_t c_ep0_out,
                             chanend_t c_ep0_in,
                             chanend_t c_audioCtrl,
@@ -32,22 +33,9 @@ extern void XUA_Buffer(
             chanend_t c_aud
 );
 
-// TODO unglobalise
-const size_t num_ep_out = 2;
-XUD_EpType epTypeTableOut[num_ep_out] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO};
 
-channel_t c_ep_out[num_ep_out];
-chanend_t chanend_ep_out[num_ep_out];
-
-const size_t num_ep_in = 3;
-XUD_EpType epTypeTableIn[num_ep_in] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO, XUD_EPTYPE_ISO};
-
-channel_t c_ep_in[num_ep_in];
-chanend_t chanend_ep_in[num_ep_in];
-
-
-DECLARE_JOB(xud_wrapper, (chanend_t));
-void xud_wrapper(chanend_t c_sof){
+DECLARE_JOB(xud_wrapper, (chanend_t*, const size_t, chanend_t*, const size_t, chanend_t, XUD_EpType*, XUD_EpType*));
+void xud_wrapper(chanend_t *chanend_ep_out, const size_t num_ep_out, chanend_t *chanend_ep_in, const size_t num_ep_in, chanend_t c_sof, XUD_EpType *epTypeTableOut, XUD_EpType *epTypeTableIn){
     hwtimer_realloc_xc_timer();
     XUD_Main(chanend_ep_out, num_ep_out, chanend_ep_in, num_ep_in,
              c_sof, epTypeTableOut, epTypeTableIn, 
@@ -60,14 +48,22 @@ void ep0_wrapper(chanend_t c_ep0_out, chanend_t c_ep0_in, chanend_t c_aud_ctl){
     XUA_Endpoint0(c_ep0_out, c_ep0_in, c_aud_ctl, 0, 0, 0, 0);
 }
 
-DECLARE_JOB(buffer_wrapper, (chanend_t, chanend_t, port_t, chanend_t));
-void buffer_wrapper(chanend_t c_sof, chanend_t c_aud_ctl, port_t p_for_mclk_count, chanend_t c_aud){
-    XUA_Buffer(c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof, c_aud_ctl, p_for_mclk_count, c_aud);
+DECLARE_JOB(buffer_wrapper, (chanend_t, chanend_t, chanend_t, chanend_t, chanend_t, port_t, chanend_t));
+void buffer_wrapper(chanend_t c_ep_aud_out, chanend_t c_ep_aud_in, chanend_t c_ep_fb, chanend_t c_sof, chanend_t c_aud_ctl, port_t p_for_mclk_count, chanend_t c_aud){
+    XUA_Buffer(c_ep_aud_out, c_ep_aud_in, c_ep_fb, c_sof, c_aud_ctl, p_for_mclk_count, c_aud);
 }
 
 
 void xua_wrapper(chanend_t c_aud) {
     printf("xua_wrapper\n");
+
+    const size_t num_ep_out = 2;
+    channel_t c_ep_out[num_ep_out];
+    chanend_t chanend_ep_out[num_ep_out];
+
+    const size_t num_ep_in = 3;
+    channel_t c_ep_in[num_ep_in];
+    chanend_t chanend_ep_in[num_ep_in];
 
     for(int i = 0; i < num_ep_out; i++){
         c_ep_out[i] = chan_alloc();
@@ -82,6 +78,10 @@ void xua_wrapper(chanend_t c_aud) {
     channel_t c_sof = chan_alloc();
     channel_t c_aud_ctl = chan_alloc();
 
+    /* Declare enpoint tables */
+    XUD_EpType epTypeTableOut[num_ep_out] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO};
+    XUD_EpType epTypeTableIn[num_ep_in] = {XUD_EPTYPE_CTL | XUD_STATUS_ENABLE, XUD_EPTYPE_ISO, XUD_EPTYPE_ISO};
+
     /* Declare and enable internal MCLK counting port */
     port_t p_for_mclk_count = PORT_MCLK_COUNT;
     port_enable(p_for_mclk_count);
@@ -95,22 +95,23 @@ void xua_wrapper(chanend_t c_aud) {
     port_set_clock(p_for_mclk_count, usb_mclk_in_clk);
     clock_start(usb_mclk_in_clk);
 
+    /* Spawn a total of four threads (buffer is 2) for USB subsystem */
     PAR_JOBS(
-        PJOB(xud_wrapper, (c_sof.end_a)),
+        PJOB(xud_wrapper, (chanend_ep_out, num_ep_out, chanend_ep_in, num_ep_in, c_sof.end_a, epTypeTableOut, epTypeTableIn)),
         PJOB(ep0_wrapper, (c_ep_out[0].end_b, c_ep_in[0].end_b, c_aud_ctl.end_a)),
-        PJOB(buffer_wrapper, (c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud))
+        PJOB(buffer_wrapper, (c_ep_out[1].end_b, c_ep_in[2].end_b, c_ep_in[1].end_b, c_sof.end_b, c_aud_ctl.end_b, p_for_mclk_count, c_aud))
     );
 }
 
+/* This function mirrors the API of XUA_Buffer and exchanges samples with USB */
 void xua_exchange(chanend_t c_aud, int32_t samples[NUM_USB_CHAN_IN]){
     chanend_out_word(c_aud, 0);
     int isct = chanend_test_control_token_next_byte(c_aud);
     if(isct){
         char ct = chanend_in_control_token(c_aud);
-        printf("ct: %d\n", ct);
         if(ct == SET_SAMPLE_FREQ)
         {
-            chanend_in_word(c_aud);
+            chanend_in_word(c_aud); /* Consume sample rate - always one frequency in this app */
         }
         return;
     }
@@ -118,12 +119,11 @@ void xua_exchange(chanend_t c_aud, int32_t samples[NUM_USB_CHAN_IN]){
     const unsigned loops = (NUM_USB_CHAN_OUT > 0) ? NUM_USB_CHAN_OUT : 1; 
     for(int i = 0; i < loops; i++)
     {
-        chanend_in_word(c_aud);
+        chanend_in_word(c_aud); /* Consume USB output samples - none in this app */
     }
 
     for(int i = 0; i < NUM_USB_CHAN_IN; i++)
     {
         chanend_out_word(c_aud, samples[i]);
-        // chanend_out_word(c_aud, 0x20000000);
     }
 }
