@@ -35,7 +35,7 @@ To build for the first time you will need to run cmake to create the make files:
     $ make mic_aggregator_tdm -j
     $ make mic_aggregator_usb -j
 
-Following inital cmake build, as long as you don't add new source files, you may just type:
+Following initial cmake build, as long as you don't add new source files, you may just type:
 
     $ make mic_aggregator_tdm -j
     $ make mic_aggregator_usb -j
@@ -55,9 +55,9 @@ To install Ninja, follow these steps:
 
 To build for the first time you will need to run cmake to create the make files:
 
-    $ mkdir build
+    $ md build
     $ cd build
-    $ cmake -G "Ninja" --toolchain  ../fwk_io/xmos_cmake_toolchain/xs3a.cmake ..
+    $ cmake -G "Ninja" --toolchain  ..\fwk_io\xmos_cmake_toolchain\xs3a.cmake ..
     $ ninja mic_aggregator_tdm.xe -j
     $ ninja mic_aggregator_usb.xe -j
 
