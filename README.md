@@ -1,11 +1,12 @@
 # mic_aggregator_demo
-16 PDM mics to either TDM16 slave or USB Audio demo running on the explorer board. Uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
-The decimator is configured to 48kHz PCM output. The 16 channels are loaded wither into a 16 slot TDM slave running at 24.576MHz bit clock or a USB Audio Class 2 adaptive interface and optionally amplified.
+This repo contains an app that provides 16 PDM mics to either TDM16 slave or USB Audio demo running on the explorer board. It uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
 
-For the TDM builds, a simple TDM16 master is included as well as a local 24.576MHz clock source so that mic_array and TDM16 slave may be tested standalone through the use of jumper cables.
+The decimator is configured to 48kHz PCM output. The 16 channels are loaded into a 16 slot TDM slave running at 24.576MHz bit clock or a USB Audio Class 2 asynchronous interface and optionally amplified.
+
+For the TDM build, a simple TDM16 master is included as well as a local 24.576MHz clock source so that mic_array and TDM16 slave may be tested standalone through the use of jumper cables. These may be removed when integrating into a system with TDM16 master supplied.
 
 Obtaining the app files
------------------------
+=======================
 
 Download the main repo and submodules using:
 
@@ -14,7 +15,7 @@ Download the main repo and submodules using:
 
 
 Building the app
-----------------
+================
 
 First install and source the XTC version: 15.2.1 tools. You should be able to see:
 
@@ -22,6 +23,9 @@ First install and source the XTC version: 15.2.1 tools. You should be able to se
     xcc: Build 19-198606c, Oct-25-2022
     XTC version: 15.2.1
     Copyright (C) XMOS Limited 2008-2021. All Rights Reserved.
+
+Linux or Mac
+------------
 
 To build for the first time you will need to run cmake to create the make files:
 
@@ -38,8 +42,34 @@ Following inital cmake build, as long as you don't add new source files, you may
 
 If you add new source files you will need to run the `cmake` step again.
 
+Windows
+-------
+
+It is highly recommended to use `Ninja` as the make system under cmake. Not only is it a lot faster
+than MSVC `nmake`, it also works around an issue where certain path names may cause an issue with the XMOS compiler under windows.
+
+To install Ninja, follow these steps:
+
+- Download `ninja.exe` from https://github.com/ninja-build/ninja/releases. This firmware has been tested with Ninja version v1.11.1
+- Ensure Ninja is on the command line path. You can add to the path permenantly by following these steps https://www.computerhope.com/issues/ch000549.htm. Alternatively you may set the path in the current command line session using something like `set PATH=%PATH%;C:\Users\xmos\utils\ninja`
+
+To build for the first time you will need to run cmake to create the make files:
+
+    $ mkdir build
+    $ cd build
+    $ cmake -G "Ninja" --toolchain  ../fwk_io/xmos_cmake_toolchain/xs3a.cmake ..
+    $ ninja mic_aggregator_tdm.xe -j
+    $ ninja mic_aggregator_usb.xe -j
+
+Following inital cmake build, as long as you don't add new source files, you may just type:
+
+    $ ninja mic_aggregator_tdm.xe -j
+    $ ninja mic_aggregator_usb.xe -j
+
+If you add new source files you will need to run the `cmake` step again.
+
 Known Issues
-------------
+============
 
 If using USB, there is currently a bug where an allocated timer is NULL causing an ET_ILLEGAL_RESOURCE at runtime. To work around this
 it is currently necessary to replace line 141 of `xud_device.xc` in `/fwk_io/modules/xud/lib_xud/lib_xud/src/user/control/`:
@@ -51,7 +81,7 @@ with this line:
     unsigned t_now = time; do{t :> t_now;}while timeafter(t_now, time+50000); 
 
 Running the app
----------------
+===============
 
 Connect the explorer board to the host and type:
 
@@ -61,7 +91,7 @@ Connect the explorer board to the host and type:
 Optionally, you may use xrun `--xscope` to provide debug output.
 
 Required Hardware
------------------
+=================
 
 The demo runs on the XCORE-AI Explorer board version 2 (with integrated XTAG debug adapter). You will require in addition:
 
@@ -78,7 +108,7 @@ If you wish to see all 16 mics running then an external mic board with 16 mics (
 
 
 Jumper Connections
-------------------
+==================
 
 Make the following connections using flying leads:
 
