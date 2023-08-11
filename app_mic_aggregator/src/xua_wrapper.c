@@ -45,12 +45,16 @@ void xud_wrapper(chanend_t *chanend_ep_out, const size_t num_ep_out, chanend_t *
 
 DECLARE_JOB(ep0_wrapper, (chanend_t, chanend_t, chanend_t));
 void ep0_wrapper(chanend_t c_ep0_out, chanend_t c_ep0_in, chanend_t c_aud_ctl){
+    hwtimer_realloc_xc_timer();
     XUA_Endpoint0(c_ep0_out, c_ep0_in, c_aud_ctl, 0, 0, 0, 0);
+    hwtimer_free_xc_timer();
 }
 
 DECLARE_JOB(buffer_wrapper, (chanend_t, chanend_t, chanend_t, chanend_t, chanend_t, port_t, chanend_t));
 void buffer_wrapper(chanend_t c_ep_aud_out, chanend_t c_ep_aud_in, chanend_t c_ep_fb, chanend_t c_sof, chanend_t c_aud_ctl, port_t p_for_mclk_count, chanend_t c_aud){
+    hwtimer_realloc_xc_timer();
     XUA_Buffer(c_ep_aud_out, c_ep_aud_in, c_ep_fb, c_sof, c_aud_ctl, p_for_mclk_count, c_aud);
+    hwtimer_free_xc_timer();
 }
 
 
