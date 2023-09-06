@@ -1,4 +1,11 @@
+DEPRECATION WARNING
+===================
+
+* THIS APP HAS NOW BEEN UPDATED AND MOVED TO https://github.com/xmos/sln_voice/tree/develop/examples/mic_aggregator. PLEASE USE THIS LINK. THIS REPO IS NO LONGER MAINTANED. *
+
+
 # mic_aggregator_demo
+
 This repo contains an app that provides 16 PDM mics to either TDM16 slave or USB Audio demo running on the explorer board. It uses a modified mic_array with multiple threads to support 16 DDR mics on a single 8b input port.
 
 The decimator is configured to 48kHz PCM output. The 16 channels are loaded into a 16 slot TDM slave running at 24.576MHz bit clock or a USB Audio Class 2 asynchronous interface and optionally amplified.
